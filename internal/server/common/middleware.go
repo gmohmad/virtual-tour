@@ -6,9 +6,8 @@ import (
 	"strings"
 
 	"github.com/gmohmad/diploma/internal/auth"
+	"github.com/gmohmad/diploma/internal/config"
 )
-
-const userIDKey = "userID"
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +29,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userIDKey, claims.UserID)
+		ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

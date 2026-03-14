@@ -38,10 +38,12 @@ func (s *Server) setupHandler() {
 
 	r.HandleFunc("POST /login", s.handleLogin)
 	r.HandleFunc("POST /register", s.handleRegister)
-	r.HandleFunc("GET /test", common.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		w.Write([]byte("SUCCESS"))
-	}))
+
+	r.HandleFunc("GET /get-tour-by-id/{id}", common.AuthMiddleware(s.handleGetTourByID))
+	r.HandleFunc("GET /get-tours-by-user-id", common.AuthMiddleware(s.handleGetUserTours))
+	r.HandleFunc("POST /create-tour", common.AuthMiddleware(s.handleCreateTour))
+	r.HandleFunc("PUT /update-tour/{id}", common.AuthMiddleware(s.handleUpdateTour))
+	r.HandleFunc("DELETE /delete-tour/{id}", common.AuthMiddleware(s.handleDeleteTour))
 
 	s.server.Handler = r
 }

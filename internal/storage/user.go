@@ -23,10 +23,13 @@ func (s *Storage) CreateUser(ctx context.Context, email, password string) (*User
 	}
 
 	var user User
-	query := `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, password_hash, created_at, updated_at`
+	query := `INSERT INTO users (email, password_hash)
+			  VALUES ($1, $2)
+			  RETURNING id, email, password_hash, created_at, updated_at`
 	row := s.client.QueryRow(ctx, query, email, string(hashed))
-	err = row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
-	if err != nil {
+	if err = row.Scan(
+		&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
+	); err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -36,8 +39,9 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (*User, erro
 	var user User
 	query := `SELECT id, email, password_hash, created_at, updated_at FROM users WHERE email = $1`
 	row := s.client.QueryRow(ctx, query, email)
-	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
-	if err != nil {
+	if err := row.Scan(
+		&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
+	); err != nil {
 		return nil, err
 	}
 	return &user, nil
