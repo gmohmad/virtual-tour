@@ -21,8 +21,7 @@ func (h *Hub) ConnectToSession(sessionID string, client *Client) error {
 	if !ok {
 		return fmt.Errorf("a session with provided id does not exist")
 	}
-	session.clients.Set(client.id, client)
-	return nil
+	return session.AddClient(client)
 }
 
 func (h *Hub) CreateSession(sessionID string, owner *Client) error {
