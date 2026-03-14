@@ -1,11 +1,11 @@
-package ws
+package common
 
 import (
 	"fmt"
 	"net/http"
 )
 
-func getValFromQueryParams(key string, r *http.Request) (string, error) {
+func GetValFromQueryParams(key string, r *http.Request) (string, error) {
 	value := r.URL.Query().Get(key)
 	if value == "" {
 		return "", fmt.Errorf("%s cant be empty", key)
@@ -13,7 +13,7 @@ func getValFromQueryParams(key string, r *http.Request) (string, error) {
 	return value, nil
 }
 
-func writeResponse(w http.ResponseWriter, msg string, code int) {
+func WriteResponse(w http.ResponseWriter, msg string, code int) {
 	w.WriteHeader(code)
 	w.Write([]byte(msg))
 }
