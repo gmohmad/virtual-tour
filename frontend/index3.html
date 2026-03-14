@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PSV — Receiver (read‑only, no links)</title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.14.1/index.css" />
+  <style> body { margin:0; } #viewer { width:100vw; height:100vh; } </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js",
+      "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.14.1/index.module.js",
+      "@photo-sphere-viewer/virtual-tour-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/virtual-tour-plugin@5.14.1/index.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="viewer"></div>
+
+  <script type="module">
+    import { Viewer } from '@photo-sphere-viewer/core';
+    import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin';
+
+    // --- nodes with NO links (read‑only) ---
+    const nodes = [
+      { id: 'zal', panorama: './zal.jpg', name: 'Zal' },
+      { id: 'prih', panorama: './prih2.jpg', name: 'Prih' },
+      { id: 'kuh', panorama: './kuh.jpg', name: 'Kuh' }
+    ];
+
+    const viewer = new Viewer({
+      container: document.getElementById('viewer'),
+      panorama: nodes[0].panorama,
+      caption: nodes[0].name,
+
+      // Disable ALL user interactions
+      mousewheel: false,
+      mousemove: false,
+      touchmove: false,
+      touchmoveTwoFingers: false,
+      keyboard: false,
+      navbar: false,
+
+      // VirtualTourPlugin with no links (renderLinks is redundant now)
+      plugins: [[VirtualTourPlugin, { nodes, renderLinks: false }]]
+    });
+
+    const virtualTour = viewer.getPlugin(VirtualTourPlugin);
+    virtualTour.setCurrentNode('prih');
+
+    // ready guard + pending queue
+    let isReady = false;
+    const pendingCommands = [];
+    viewer.addEventListener('ready', () => {
+      isReady = true;
+      pendingCommands.forEach(cmd => applyCommand(cmd));
+      pendingCommands.length = 0;
+    });
+
+    let currentRoomId = 'prih';
+
+    function applyCommand(msg) {
+      console.log("message", msg);
+      if (!isReady) {
+        pendingCommands.push(msg);
+        return;
+      }
+
+      const { type, data } = msg;
+
+      try {
+        switch (type) {
+          case 'state': {
+            if (data.nodeId && data.nodeId !== currentRoomId) {
+              virtualTour.setCurrentNode(data.nodeId);
+              currentRoomId = data.nodeId;
+            }
+            if (data.yaw !== undefined && data.pitch !== undefined) {
+              let yaw = data.yaw;
+              let pitch = data.pitch;
+              if (typeof yaw === 'string' && yaw.endsWith('deg')) yaw = parseFloat(yaw) * Math.PI / 180;
+              if (typeof pitch === 'string' && pitch.endsWith('deg')) pitch = parseFloat(pitch) * Math.PI / 180;
+              if (data.degrees === true) { yaw = yaw * Math.PI / 180; pitch = pitch * Math.PI / 180; }
+              viewer.rotate({ yaw, pitch });
+            }
+            if (typeof data.zoomLevel === 'number') {
+              const level = Math.max(0, Math.min(100, data.zoomLevel));
+              viewer.zoom(level);
+            }
+            break;
+          }
+
+          case 'room':
+            if (data && data.nodeId) {
+              virtualTour.setCurrentNode(data.nodeId);
+              currentRoomId = data.nodeId;
+            }
+            break;
+
+          case 'position': {
+            if (data == null) break;
+            let yaw = data.yaw;
+            let pitch = data.pitch;
+            if (typeof yaw === 'string' && yaw.endsWith('deg')) yaw = parseFloat(yaw) * Math.PI / 180;
+            if (typeof pitch === 'string' && pitch.endsWith('deg')) pitch = parseFloat(pitch) * Math.PI / 180;
+            if (data.degrees === true) { yaw = yaw * Math.PI / 180; pitch = pitch * Math.PI / 180; }
+            viewer.rotate({ yaw, pitch });
+            break;
+          }
+
+          case 'zoom': {
+            if (data == null || typeof data.zoomLevel !== 'number') break;
+            const level = Math.max(0, Math.min(100, data.zoomLevel));
+            viewer.zoom(level);
+            break;
+          }
+
+          default:
+            console.warn('Unknown message type:', type);
+        }
+      } catch (err) {
+        console.error('applyCommand error', err);
+      }
+    }
+
+    // WebSocket (adjust URL to your server)
+	// const ws = new WebSocket(`ws://192.168.105.102:8080/connect?session_id=abc423&client_id=bo35s3`);
+	const ws = new WebSocket('ws://localhost:8080/connect?session_id=abc423&client_id=o2352353');
+    ws.onopen = () => console.log('Receiver WebSocket connected');
+    ws.onclose = () => console.log('Receiver WebSocket disconnected');
+    ws.onerror = (err) => console.error('WebSocket error', err);
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        applyCommand(msg);
+      } catch (e) {
+        console.error('Failed to parse message:', e);
+      }
+    };
+
+    window.psv = viewer;
+    console.log('Receiver is read‑only – no links, no interaction.');
+  </script>
+</body>
+</html>
