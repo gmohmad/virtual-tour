@@ -7,6 +7,7 @@ import (
 	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/gmohmad/diploma/internal/storage"
+	"github.com/rs/cors"
 )
 
 type Server struct {
@@ -39,11 +40,18 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("POST /login", s.handleLogin)
 	r.HandleFunc("POST /register", s.handleRegister)
 
+	r.HandleFunc("GET /public/tour/{id}", s.handleGetTourByID)
 	r.HandleFunc("GET /get-tour-by-id/{id}", common.AuthMiddleware(s.handleGetTourByID))
 	r.HandleFunc("GET /get-tours-by-user-id", common.AuthMiddleware(s.handleGetUserTours))
 	r.HandleFunc("POST /create-tour", common.AuthMiddleware(s.handleCreateTour))
 	r.HandleFunc("PUT /update-tour/{id}", common.AuthMiddleware(s.handleUpdateTour))
 	r.HandleFunc("DELETE /delete-tour/{id}", common.AuthMiddleware(s.handleDeleteTour))
 
-	s.server.Handler = r
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"}, // your frontend dev URL
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
+	s.server.Handler = c.Handler(r)
 }
