@@ -2,7 +2,6 @@ package livetour
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -61,9 +60,6 @@ func (c *Client) poll(shutdown chan struct{}, incoming chan<- clientMessage, unr
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("client %s read error: %v", c.id, err)
-			}
 			return
 		}
 		select {

@@ -19,10 +19,15 @@ export const SessionAuthor: React.FC = () => {
 	};
 
 	const endSession = () => {
-		if (wsRef.current) {
-			wsRef.current.close();
+		if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+			wsRef.current.send(JSON.stringify({ type: 'session_ended' }));
+			setTimeout(() => {
+				wsRef.current?.close();
+				navigate('/tours');
+			}, 100);
+		} else {
+			navigate('/tours');
 		}
-		navigate('/tours');
 	};
 
 	if (!tour) return <div>Loading tour...</div>;

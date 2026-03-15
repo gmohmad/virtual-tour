@@ -45,10 +45,10 @@ func (s *Session) Run() {
 			s.clients.Del(client.id)
 			client.close()
 			if client.id == s.owner.id {
-				log.Printf("Owner %s disconnected, ending session %s", client.id, s.id)
+				log.Printf("owner %s disconnected, ending session %s", client.id, s.id)
 				s.ShutDown()
 			} else {
-				s.broadcast([]byte(`{"type":"user_left","clientId":"`+client.id+`"}`), true)
+				log.Printf("client %s disconnected", client.id)
 			}
 
 		case msg := <-s.incoming:

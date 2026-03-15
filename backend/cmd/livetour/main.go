@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.MustLoad(os.Getenv("CONFIG_PATH"))
+	cfg, err := config.MustLoad(os.Getenv("LIVETOUR_CONFIG_PATH"))
 	if err != nil {
 		log.Fatalf("failed loading config: %v", err)
 	}
