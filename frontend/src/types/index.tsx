@@ -3,6 +3,14 @@ export interface User {
 	email: string;
 }
 
+export interface TourViewerProps {
+  mode: 'author' | 'client';
+  tourData: TourData;
+  sessionId: string;
+  onReady?: () => void;
+  onWebSocketCreated?: (ws: WebSocket | null) => void; // new
+}
+
 export interface Tour {
 	id: string;
 	name: string;

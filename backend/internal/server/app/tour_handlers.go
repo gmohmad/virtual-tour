@@ -2,7 +2,10 @@ package app
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gmohmad/diploma/internal/server/common"
@@ -194,4 +197,36 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20)
+
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, "Failed to read file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Generate a unique filename
+	ext := filepath.Ext(handler.Filename)
+	filename := time.Now().Format("20060102150405") + "_" + uuid.New().String() + ext
+	filepath := filepath.Join("./uploads", filename)
+
+	dst, err := os.Create(filepath)
+	if err != nil {
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the public URL
+	publicURL := "/uploads/" + filename
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"url": publicURL})
 }

@@ -1,27 +1,36 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-export const useWebSocket = (url: string) => {
-	const [lastMessage, setLastMessage] = useState<string | null>(null);
-	const [readyState, setReadyState] = useState<number>(WebSocket.CONNECTING);
-	const wsRef = useRef<WebSocket | null>(null);
+export const useWebSocket = (path: string, query: Record<string, string>) => {
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const [readyState, setReadyState] = useState<number>(WebSocket.CONNECTING);
+  const wsRef = useRef<WebSocket | null>(null);
 
-	useEffect(() => {
-		const ws = new WebSocket(url);
-		wsRef.current = ws;
+  useEffect(() => {
+    const params = new URLSearchParams(query).toString();
+    const url = `${import.meta.env.VITE_LIVETOUR_WS_URL}${path}?${params}`;
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
 
-		ws.onopen = () => setReadyState(WebSocket.OPEN);
-		ws.onclose = () => setReadyState(WebSocket.CLOSED);
-		ws.onerror = () => setReadyState(WebSocket.CLOSED);
-		ws.onmessage = (event) => setLastMessage(event.data);
+    ws.onopen = () => setReadyState(WebSocket.OPEN);
+    ws.onclose = () => setReadyState(WebSocket.CLOSED);
+    ws.onerror = (e) => {
+      console.error('WebSocket error', e);
+      setReadyState(WebSocket.CLOSED);
+    };
+    ws.onmessage = (event) => setLastMessage(event.data);
 
-		return () => ws.close();
-	}, [url]);
+    return () => {
+      if (wsRef.current === ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [path, JSON.stringify(query)]);
 
-	const sendMessage = (msg: any) => {
-		if (wsRef.current?.readyState === WebSocket.OPEN) {
-			wsRef.current.send(JSON.stringify(msg));
-		}
-	};
+  const sendMessage = useCallback((msg: any) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []); // stable identity
 
-	return { sendMessage, lastMessage, readyState };
+  return { sendMessage, lastMessage, readyState, ws: wsRef.current };
 };

@@ -28,7 +28,7 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.hub.CreateSession(sessionID, livetour.NewClient(clientID, conn))
-	// writeResponse(w, "session created", http.StatusOK)
+	// common.WriteResponse(w, "session created", http.StatusOK)
 }
 
 func (s *Server) handleEndSession(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ func (s *Server) handleEndSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.hub.EndSession(sessionID, clientID)
-	// writeResponse(w, "session ended", http.StatusOK)
+	common.WriteResponse(w, "session ended", http.StatusOK)
 }
 
 func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) {

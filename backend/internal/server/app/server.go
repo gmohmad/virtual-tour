@@ -46,12 +46,15 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("POST /create-tour", common.AuthMiddleware(s.handleCreateTour))
 	r.HandleFunc("PUT /update-tour/{id}", common.AuthMiddleware(s.handleUpdateTour))
 	r.HandleFunc("DELETE /delete-tour/{id}", common.AuthMiddleware(s.handleDeleteTour))
+	r.HandleFunc("POST /upload", common.AuthMiddleware(s.handleUpload))
+	r.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"}, // your frontend dev URL
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "Origin"},
 		AllowCredentials: true,
+		Debug:            false,
 	})
 	s.server.Handler = c.Handler(r)
 }

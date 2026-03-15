@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyTours, deleteTour } from '../services/api';
 import type { Tour } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 export const ToursList: React.FC = () => {
@@ -16,7 +16,6 @@ export const ToursList: React.FC = () => {
 
 	const loadTours = async () => {
 		const res = await getMyTours();
-		console.log(res);
 		setTours(res.data);
 	};
 
@@ -35,13 +34,13 @@ export const ToursList: React.FC = () => {
 	return (
 		<div style={{ padding: '20px' }}>
 		<h1>My Tours</h1>
-		<button onClick={() => navigate('/tours/new')}>Create New Tour</button>
+		<Link to="/tours/new">Create New Tour</Link>
 		<ul>
 		{tours.map(tour => (
 			<li key={tour.id}>
 			<h3>{tour.name}</h3>
 			<button onClick={() => startSession(tour.id)}>Start Session</button>
-			<button onClick={() => navigate(`/tours/edit/${tour.id}`)}>Edit</button>
+			<Link to={`/tours/edit/${tour.id}`}>Edit</Link>
 			<button onClick={() => handleDelete(tour.id)}>Delete</button>
 			</li>
 		))}

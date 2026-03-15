@@ -7,6 +7,7 @@ import (
 	"github.com/gmohmad/diploma/internal/config"
 	livetour "github.com/gmohmad/diploma/internal/livetour"
 	"github.com/gorilla/websocket"
+	"github.com/rs/cors"
 )
 
 var upgrader = websocket.Upgrader{
@@ -42,7 +43,14 @@ func (s *Server) setupHandler() {
 
 	r.HandleFunc("GET /connect", s.handleConnectToSession)
 	r.HandleFunc("GET /end-session", s.handleEndSession)
-	r.HandleFunc("POST /create-session", s.handleCreateSession)
+	r.HandleFunc("GET /create-session", s.handleCreateSession)
 
-	s.server.Handler = r
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
+
+	s.server.Handler = c.Handler(r)
 }
