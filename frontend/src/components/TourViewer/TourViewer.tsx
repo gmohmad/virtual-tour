@@ -14,6 +14,7 @@ interface TourViewerProps {
 	onReady?: () => void;
 	onWebSocketCreated?: (ws: WebSocket | null) => void;
 	onSessionEnded?: () => void;
+	onError?: (error: string) => void;
 }
 
 export const TourViewer: React.FC<TourViewerProps> = ({
@@ -23,6 +24,7 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 	onReady,
 	onWebSocketCreated,
 	onSessionEnded,
+	onError,
 }) => {
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
@@ -80,31 +82,55 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 				console.log('Session ended by author');
 			onSessionEnded?.();
 			break;
+			case 'error':
+				console.error('Server error:', msg.error);
+			onError?.(msg.error);
+			break;
 			default:
 				console.warn('Unknown message type', type);
 		}
 	};
 
-	// Queue messages until ready (client mode)
+	// Add a ref to track the last processed raw message
+	const lastProcessedRaw = useRef<string | null>(null);
+
+	// Process incoming raw messages from WebSocket
 	useEffect(() => {
 		if (mode !== 'client' || !lastMessage) return;
+
+		// Skip if this exact raw message was already processed
+		if (lastProcessedRaw.current === lastMessage) return;
+
+	if (!isReady) {
+		// Not ready – queue the raw message
+		messageQueue.current.push(lastMessage);
+	} else {
+		// Ready – process immediately
 		try {
 			const msg = JSON.parse(lastMessage);
-			if (!isReady) {
-				messageQueue.current.push(msg);
-			} else {
-				processMessage(msg);
-			}
+			processMessage(msg);
+			lastProcessedRaw.current = lastMessage; // mark as processed
 		} catch (e) {
 			console.error('Failed to parse message', e);
 		}
+	}
 	}, [lastMessage, isReady, mode]);
 
-	// Process queued messages when ready
+	// Process queued messages when viewer becomes ready
 	useEffect(() => {
 		if (isReady && messageQueue.current.length > 0) {
-			messageQueue.current.forEach(processMessage);
-			messageQueue.current = [];
+			// Process each queued raw message, skipping any already processed
+			messageQueue.current.forEach((raw) => {
+				if (lastProcessedRaw.current === raw) return; // skip if already processed
+					try {
+						const msg = JSON.parse(raw);
+						processMessage(msg);
+						lastProcessedRaw.current = raw; // mark as processed
+					} catch (e) {
+						console.error('Failed to parse queued message', e);
+					}
+			});
+			messageQueue.current = []; // clear queue
 		}
 	}, [isReady]);
 

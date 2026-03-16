@@ -2,6 +2,7 @@ package livetour
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gmohmad/diploma/pkg/maputil"
 )
@@ -32,7 +33,8 @@ func (h *Hub) CreateSession(sessionID string, owner *Client) error {
 
 	session := NewSession(sessionID, owner)
 	h.sessions.Set(sessionID, session)
-	go session.Run()
+	go session.Run(h.sessions)
+	log.Printf("session %s created. author - %s\n", session.id, owner.id)
 	return nil
 }
 
@@ -47,5 +49,6 @@ func (h *Hub) EndSession(sessionID, clientID string) error {
 
 	h.sessions.Del(sessionID)
 	session.ShutDown()
+	log.Printf("session %s was ended\n", session.id)
 	return nil
 }

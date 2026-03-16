@@ -27,8 +27,14 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.hub.CreateSession(sessionID, livetour.NewClient(clientID, conn))
-	// common.WriteResponse(w, "session created", http.StatusOK)
+	if err := s.hub.CreateSession(sessionID, livetour.NewClient(clientID, conn)); err != nil {
+		conn.WriteJSON(map[string]string{
+			"type":  "error",
+			"error": err.Error(),
+		})
+		conn.Close()
+		return
+	}
 }
 
 func (s *Server) handleEndSession(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +75,11 @@ func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) 
 
 	client := livetour.NewClient(clientID, conn)
 	if err := s.hub.ConnectToSession(sessionID, client); err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusForbidden)
+		conn.WriteJSON(map[string]string{
+			"type":  "error",
+			"error": err.Error(),
+		})
+		conn.Close()
 		return
 	}
-	// writeResponse(w, "successfully connected to session", http.StatusOK)
 }

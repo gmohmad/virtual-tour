@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
 	plugins: [react()],
+	server: {
+		host: "0.0.0.0",
+		port: 3000,
+	},
 	optimizeDeps: {
 		include: ['three', '@photo-sphere-viewer/core', '@photo-sphere-viewer/virtual-tour-plugin']
 	}

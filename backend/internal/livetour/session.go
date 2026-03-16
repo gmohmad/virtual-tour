@@ -31,24 +31,22 @@ func NewSession(id string, owner *Client) *Session {
 	return s
 }
 
-func (s *Session) Run() {
+func (s *Session) Run(hubSessions *maputil.AsyncMap[string, *Session]) {
 	pingTicker := time.NewTicker(pingPeriod)
 	defer pingTicker.Stop()
 
 	for {
 		select {
-		case <-s.shutdown:
-			s.Close()
-			return
-
 		case client := <-s.unregister:
-			s.clients.Del(client.id)
 			client.close()
+			s.clients.Del(client.id)
 			if client.id == s.owner.id {
-				log.Printf("owner %s disconnected, ending session %s", client.id, s.id)
-				s.ShutDown()
+				s.Close()
+				hubSessions.Del(s.id)
+				log.Printf("owner %s disconnected, ending session %s\n", client.id, s.id)
+				return
 			} else {
-				log.Printf("client %s disconnected", client.id)
+				log.Printf("client %s disconnected\n", client.id)
 			}
 
 		case msg := <-s.incoming:
@@ -70,14 +68,12 @@ func (s *Session) AddClient(client *Client) error {
 
 	s.clients.Set(client.id, client)
 	go client.poll(s.shutdown, s.incoming, s.unregister)
+	log.Printf("client %s connected to session %s\n", client.id, s.id)
 	return nil
 }
 
 func (s *Session) ShutDown() {
-	select {
-	case s.shutdown <- struct{}{}:
-	default:
-	}
+	s.shutdown <- struct{}{}
 }
 
 func (s *Session) Close() {
