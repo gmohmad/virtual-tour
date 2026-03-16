@@ -19,12 +19,22 @@ export const Login: React.FC = () => {
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-		<h2>Login</h2>
-		<input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-		<input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+		<div className="centered-form">
+		<form onSubmit={handleSubmit} className="card" style={{ width: '400px', maxWidth: '90%' }}>
+		<h2 style={{ marginTop: 0 }}>Login</h2>
+		<div className="form-group">
+		<label>Email</label>
+		<input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+		</div>
+		<div className="form-group">
+		<label>Password</label>
+		<input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+		</div>
+		<div className="button-group">
 		<button type="submit">Login</button>
-		<Link to="/register">Register</Link>
+		<Link to="/register" className="button">Register</Link>
+		</div>
 		</form>
+		</div>
 	);
 };

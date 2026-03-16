@@ -7,6 +7,7 @@ import type { Tour } from '../types';
 export const SessionAuthor: React.FC = () => {
 	const { sessionId, tourId } = useParams<{ sessionId: string; tourId: string }>();
 	const [tour, setTour] = useState<Tour | null>(null);
+	const [showShare, setShowShare] = useState(false);
 	const navigate = useNavigate();
 	const wsRef = useRef<WebSocket | null>(null);
 
@@ -30,23 +31,42 @@ export const SessionAuthor: React.FC = () => {
 		}
 	};
 
-	if (!tour) return <div>Loading tour...</div>;
-
 	const shareUrl = `${window.location.origin}/session/${sessionId}/${tourId}`;
+
+	const copyToClipboard = () => {
+		navigator.clipboard.writeText(shareUrl);
+		alert('Link copied to clipboard!');
+	};
+
+	if (!tour) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading tour...</div>;
 
 	return (
 		<>
-		<div style={{ position: 'absolute', top: 10, left: 10, zIndex: 1000, background: 'white', padding: 10, borderRadius: 4 }}>
-		<strong>Share this link:</strong> <input readOnly value={shareUrl} style={{ width: 300 }} />
-		<button onClick={endSession} className="danger" style={{ marginLeft: 10 }}>End Session</button>
-		</div>
-		<TourViewer 
-			key={tour.id} 
-			mode="author" 
-			tourData={tour.data} 
-			sessionId={sessionId!} 
-			onWebSocketCreated={handleWebSocketCreated}
+		<TourViewer
+		key={tour.id}
+		mode="author"
+		tourData={tour.data}
+		sessionId={sessionId!}
+		onWebSocketCreated={handleWebSocketCreated}
 		/>
+		<div className="session-bottom-bar">
+		<button onClick={endSession} className="danger">End Session</button>
+		<button onClick={() => setShowShare(!showShare)}>Share Link</button>
+		</div>
+		{showShare && (
+			<div className="share-popup">
+			<input
+			type="text"
+			readOnly
+			value={shareUrl}
+			onClick={(e) => e.currentTarget.select()}
+			/>
+			<div className="button-group">
+			<button onClick={copyToClipboard}>Copy</button>
+			<button onClick={() => setShowShare(false)}>Close</button>
+			</div>
+			</div>
+		)}
 		</>
 	);
 };

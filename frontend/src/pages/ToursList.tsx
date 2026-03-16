@@ -32,19 +32,33 @@ export const ToursList: React.FC = () => {
 	};
 
 	return (
-		<div style={{ padding: '20px' }}>
+		<div className="container">
+		<div className="card">
 		<h1>My Tours</h1>
-		<Link to="/tours/new">Create New Tour</Link>
-		<ul>
+		<Link to="/tours/new" className="button" style={{ display: 'inline-block', marginBottom: '1rem' }}>
+		Create New Tour
+		</Link>
+
+		{tours.length === 0 ? (
+			<p>You haven't created any tours yet.</p>
+		) : (
+		<ul className="tour-list">
 		{tours.map(tour => (
 			<li key={tour.id}>
-			<h3>{tour.name}</h3>
+			<div>
+			<h3 style={{ margin: '0 0 0.25rem 0' }}>{tour.name}</h3>
+			<small>ID: {tour.id}</small>
+			</div>
+			<div className="button-group">
 			<button onClick={() => startSession(tour.id)}>Start Session</button>
-			<Link to={`/tours/edit/${tour.id}`}>Edit</Link>
-			<button onClick={() => handleDelete(tour.id)}>Delete</button>
+			<Link to={`/tours/edit/${tour.id}`} className="button">Edit</Link>
+			<button onClick={() => handleDelete(tour.id)} className="danger">Delete</button>
+			</div>
 			</li>
 		))}
 		</ul>
+		)}
+		</div>
 		</div>
 	);
 };

@@ -5,8 +5,8 @@ import { ImageUpload } from '../components/ImageUpload/ImageUpload';
 import type { TourData, TourNode } from '../types';
 
 export const TourEditor: React.FC = () => {
-	const { id } = useParams<{ id: string }>(); // if editing
-		const navigate = useNavigate();
+	const { id } = useParams<{ id: string }>();
+	const navigate = useNavigate();
 	const [name, setName] = useState('');
 	const [nodes, setNodes] = useState<TourNode[]>([
 		{ id: 'node1', name: 'Room 1', panorama: '', links: [] },
@@ -15,7 +15,6 @@ export const TourEditor: React.FC = () => {
 
 	useEffect(() => {
 		if (id) {
-			// load existing tour
 			getTourById(id).then(res => {
 				setName(res.data.name);
 				setNodes(res.data.data.nodes);
@@ -43,12 +42,10 @@ export const TourEditor: React.FC = () => {
 	};
 
 	const handleImageUploaded = (index: number, url: string) => {
-		// Backend returns a relative /uploads/... URL; store a full URL so
-		// the viewer can fetch the image regardless of where the frontend runs.
 		const fullUrl = url.startsWith('http')
 			? url
 			: `${import.meta.env.VITE_API_BASE_URL}${url}`;
-		updateNode(index, 'panorama', fullUrl);
+			updateNode(index, 'panorama', fullUrl);
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -71,37 +68,42 @@ export const TourEditor: React.FC = () => {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} style={{ padding: '20px' }}>
+		<div className="container">
+		<form onSubmit={handleSubmit} className="card">
 		<h1>{id ? 'Edit Tour' : 'Create Tour'}</h1>
-		<div>
-		<label>Tour Name:</label>
+
+		<div className="form-group">
+		<label>Tour Name</label>
 		<input value={name} onChange={e => setName(e.target.value)} required />
 		</div>
 
 		<h2>Rooms (Nodes)</h2>
 		{nodes.map((node, idx) => (
-			<div key={node.id} style={{ border: '1px solid #ccc', margin: '10px 0', padding: '10px' }}>
+			<div key={node.id} className="card" style={{ marginBottom: '1rem' }}>
 			<h4>Room {idx + 1}</h4>
-			<div>
-			<label>Room Name:</label>
+
+			<div className="form-group">
+			<label>Room Name</label>
 			<input value={node.name} onChange={e => updateNode(idx, 'name', e.target.value)} />
 			</div>
-			<div>
-			<label>Panorama Image:</label>
+
+			<div className="form-group">
+			<label>Panorama Image</label>
 			{node.panorama ? (
 				<div>
-				<img src={node.panorama} alt="preview" style={{ maxWidth: '200px' }} />
-				<button type="button" onClick={() => updateNode(idx, 'panorama', '')}>Change</button>
+				<img src={node.panorama} alt="preview" style={{ maxWidth: '200px', marginBottom: '0.5rem' }} />
+				<br />
+				<button type="button" onClick={() => updateNode(idx, 'panorama', '')}>Change Image</button>
 				</div>
 			) : (
 			<ImageUpload onUploaded={(url) => handleImageUploaded(idx, url)} />
 			)}
 			</div>
 
-			<div>
-			<h5>Links (to other rooms)</h5>
+			<div className="form-group">
+			<label>Links (to other rooms)</label>
 			{node.links?.map((link, linkIdx) => (
-				<div key={linkIdx}>
+				<div key={linkIdx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
 				<select
 				value={link.nodeId}
 				onChange={e => {
@@ -109,6 +111,7 @@ export const TourEditor: React.FC = () => {
 					newLinks[linkIdx].nodeId = e.target.value;
 					updateNode(idx, 'links', newLinks);
 				}}
+				style={{ flex: 2 }}
 				>
 				<option value="">Select target room</option>
 				{nodes.map(n => (
@@ -124,6 +127,7 @@ export const TourEditor: React.FC = () => {
 					newLinks[linkIdx].position.yaw = parseFloat(e.target.value);
 					updateNode(idx, 'links', newLinks);
 				}}
+				style={{ width: '80px' }}
 				/>
 				<input
 				type="number"
@@ -134,11 +138,12 @@ export const TourEditor: React.FC = () => {
 					newLinks[linkIdx].position.pitch = parseFloat(e.target.value);
 					updateNode(idx, 'links', newLinks);
 				}}
+				style={{ width: '80px' }}
 				/>
 				<button type="button" onClick={() => {
 					const newLinks = node.links?.filter((_, i) => i !== linkIdx);
 					updateNode(idx, 'links', newLinks);
-				}}>Remove</button>
+				}} className="danger">Remove</button>
 				</div>
 			))}
 			<button type="button" onClick={() => addLink(idx)}>Add Link</button>
@@ -146,8 +151,11 @@ export const TourEditor: React.FC = () => {
 			</div>
 		))}
 
+		<div className="button-group" style={{ marginTop: '1rem' }}>
 		<button type="button" onClick={addNode}>Add Room</button>
 		<button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Tour'}</button>
+		</div>
 		</form>
+		</div>
 	);
 };

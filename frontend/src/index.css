@@ -58,3 +58,122 @@ input, select {
   justify-content: space-between;
   align-items: center;
 }
+
+/* Form layout */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Overlay bar for session pages */
+.session-bar {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Button spacing */
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Center content vertically & horizontally (for login/register) */
+.centered-form {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bottom bar for session pages */
+.session-bottom-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 40px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.session-bottom-bar button {
+  margin: 0;
+  background: white;
+  color: black;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.session-bottom-bar button.danger {
+  background: #dc3545;
+  color: white;
+}
+
+.session-bottom-bar button.danger:hover {
+  background: #b02a37;
+}
+
+.session-bottom-bar button:hover {
+  background: #f0f0f0;
+}
+
+/* Popup for the share link */
+.share-popup {
+  position: fixed;
+  bottom: 90px;                /* sits just above the bottom bar */
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: black;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  width: 300px;
+  z-index: 2100;
+}
+
+.share-popup input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.share-popup .button-group {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
