@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 const (
@@ -15,8 +16,9 @@ const (
 )
 
 type Client struct {
-	id   string
-	conn *websocket.Conn
+	id     string
+	conn   *websocket.Conn
+	logger *zap.Logger
 }
 
 type clientMessage struct {
@@ -24,10 +26,11 @@ type clientMessage struct {
 	Data     []byte
 }
 
-func NewClient(id string, conn *websocket.Conn) *Client {
+func NewClient(logger *zap.Logger, id string, conn *websocket.Conn) *Client {
 	return &Client{
-		id:   id,
-		conn: conn,
+		id:     id,
+		conn:   conn,
+		logger: logger,
 	}
 }
 

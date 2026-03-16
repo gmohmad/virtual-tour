@@ -8,19 +8,24 @@ import (
 	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/gmohmad/diploma/internal/storage"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 type Server struct {
+	cfg     *config.Config
+	logger  *zap.Logger
 	server  *http.Server
 	storage *storage.Storage
 }
 
-func New(cfg *config.Config, storage *storage.Storage) *Server {
+func New(cfg *config.Config, logger *zap.Logger, storage *storage.Storage) *Server {
 	ws := &Server{
+		cfg:     cfg,
+		logger:  logger,
+		storage: storage,
 		server: &http.Server{
 			Addr: cfg.HTTPServer.Address,
 		},
-		storage: storage,
 	}
 	return ws
 }
@@ -50,7 +55,7 @@ func (s *Server) setupHandler() {
 	r.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "Origin"},
 		AllowCredentials: true,

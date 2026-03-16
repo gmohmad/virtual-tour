@@ -10,22 +10,28 @@ import (
 	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/livetour"
 	livetour_server "github.com/gmohmad/diploma/internal/server/livetour"
+	"go.uber.org/zap"
 )
 
 func main() {
-	cfg, err := config.MustLoad(os.Getenv("LIVETOUR_CONFIG_PATH"))
+	logger, err := config.SetupLogger()
 	if err != nil {
-		log.Fatalf("failed loading config: %v", err)
+		log.Fatalf("failed setting up logger: %v", err)
 	}
 
-	hub := livetour.NewHub()
-	server := livetour_server.New(cfg, hub)
+	cfg, err := config.MustLoad(os.Getenv("LIVETOUR_CONFIG_PATH"))
+	if err != nil {
+		logger.Fatal("failed loading config", zap.Error(err))
+	}
+
+	hub := livetour.NewHub(cfg, logger)
+	server := livetour_server.New(cfg, logger, hub)
 	go func() {
 		if err := server.ListenAndServe(context.Background()); err != nil {
-			log.Fatalf("failed starting WS server: %v", err)
+			logger.Fatal("failed starting WS server", zap.Error(err))
 		}
 	}()
-	log.Println("server started and is listening")
+	logger.Info("server started and is listening")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -33,8 +39,8 @@ func main() {
 	<-quit
 
 	if err := server.Shutdown(context.Background()); err != nil {
-		log.Fatalf("failed shutting down server: %v", err)
+		logger.Fatal("failed shutting down server", zap.Error(err))
 	}
 
-	log.Println("server shut down")
+	logger.Info("server shut down")
 }

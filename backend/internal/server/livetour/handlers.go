@@ -27,7 +27,7 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.hub.CreateSession(sessionID, livetour.NewClient(clientID, conn)); err != nil {
+	if err := s.hub.CreateSession(sessionID, livetour.NewClient(s.logger, clientID, conn)); err != nil {
 		conn.WriteJSON(map[string]string{
 			"type":  "error",
 			"error": err.Error(),
@@ -73,7 +73,7 @@ func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client := livetour.NewClient(clientID, conn)
+	client := livetour.NewClient(s.logger, clientID, conn)
 	if err := s.hub.ConnectToSession(sessionID, client); err != nil {
 		conn.WriteJSON(map[string]string{
 			"type":  "error",

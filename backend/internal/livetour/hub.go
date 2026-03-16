@@ -2,17 +2,22 @@ package livetour
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/pkg/maputil"
+	"go.uber.org/zap"
 )
 
 type Hub struct {
+	cfg      *config.Config
+	logger   *zap.Logger
 	sessions *maputil.AsyncMap[string, *Session]
 }
 
-func NewHub() *Hub {
+func NewHub(cfg *config.Config, logger *zap.Logger) *Hub {
 	return &Hub{
+		cfg:      cfg,
+		logger:   logger,
 		sessions: maputil.NewAsyncMap[string, *Session](),
 	}
 }
@@ -31,10 +36,10 @@ func (h *Hub) CreateSession(sessionID string, owner *Client) error {
 		return fmt.Errorf("a session with the provider id already exists")
 	}
 
-	session := NewSession(sessionID, owner)
+	session := NewSession(h.logger, sessionID, owner)
 	h.sessions.Set(sessionID, session)
 	go session.Run(h.sessions)
-	log.Printf("session %s created. author - %s\n", session.id, owner.id)
+	h.logger.Info("session created", zap.String("session_id", sessionID), zap.String("owner_id", owner.id))
 	return nil
 }
 
@@ -49,6 +54,6 @@ func (h *Hub) EndSession(sessionID, clientID string) error {
 
 	h.sessions.Del(sessionID)
 	session.ShutDown()
-	log.Printf("session %s was ended\n", session.id)
+	h.logger.Info("session ended", zap.String("id", session.id))
 	return nil
 }

@@ -3,13 +3,13 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gmohmad/diploma/internal/config"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 const (
@@ -24,7 +24,7 @@ type Client interface {
 	Close()
 }
 
-func NewClient(ctx context.Context, cfg *config.DB) (pool Client, err error) {
+func NewClient(ctx context.Context, cfg *config.DB, logger *zap.Logger) (pool Client, err error) {
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
@@ -41,7 +41,11 @@ func NewClient(ctx context.Context, cfg *config.DB) (pool Client, err error) {
 			return pool, nil
 		}
 
-		log.Printf("Failed to connect to the database (attempt: %d/%d): %v", i+1, maxRetries, err)
+		logger.Error(
+			"failed to connect to the database",
+			zap.String("attempt", fmt.Sprintf("%d/%d", i+1, maxRetries)),
+			zap.Error(err),
+		)
 		time.Sleep(time.Second * delay)
 
 	}

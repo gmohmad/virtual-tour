@@ -11,35 +11,41 @@ import (
 	app_server "github.com/gmohmad/diploma/internal/server/app"
 	"github.com/gmohmad/diploma/internal/storage"
 	"github.com/gmohmad/diploma/internal/storage/postgres"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, err := config.SetupLogger()
+	if err != nil {
+		log.Fatalf("failed setting up logger: %v", err)
+	}
+
 	cfg, err := config.MustLoad(os.Getenv("APP_CONFIG_PATH"))
 	if err != nil {
-		log.Fatalf("failed loading config: %v", err)
+		logger.Fatal("failed loading config", zap.Error(err))
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	postgresClient, err := postgres.NewClient(ctx, cfg.DB)
+	postgresClient, err := postgres.NewClient(ctx, cfg.DB, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer postgresClient.Close()
 
-	if err := postgres.Migrate(cfg.DB); err != nil {
+	if err := postgres.Migrate(cfg.DB, logger); err != nil {
 		log.Fatal(err)
 	}
 
-	storage := storage.NewStorage(postgresClient)
-	server := app_server.New(cfg, storage)
+	storage := storage.NewStorage(postgresClient, logger)
+	server := app_server.New(cfg, logger, storage)
 	go func() {
 		if err := server.ListenAndServe(context.Background()); err != nil {
-			log.Fatalf("failed starting server: %v", err)
+			logger.Fatal("failed starting server", zap.Error(err))
 		}
 	}()
-	log.Println("server started and is listening")
+	logger.Info("server started and is listening")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -47,8 +53,8 @@ func main() {
 	<-quit
 
 	if err := server.Shutdown(context.Background()); err != nil {
-		log.Fatalf("failed shutting down server: %v", err)
+		logger.Fatal("failed shutting down server", zap.Error(err))
 	}
 
-	log.Println("server shut down")
+	logger.Info("server shut down")
 }

@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gmohmad/diploma/internal/config"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"go.uber.org/zap"
 )
 
-func Migrate(cfg *config.DB) error {
+func Migrate(cfg *config.DB, logger *zap.Logger) error {
 	db := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
@@ -21,10 +21,10 @@ func Migrate(cfg *config.DB) error {
 		return fmt.Errorf("failed instantiating migrate.Migrate: %w", err)
 	}
 
-	log.Println("Applying UP migrations...")
+	logger.Info("applying UP migrations")
 	if err := m.Up(); err != nil {
 		if err == migrate.ErrNoChange {
-			log.Println("No change in migrations to apply")
+			logger.Info("no change in migrations to apply")
 			return nil
 		}
 		return fmt.Errorf("failed applying UP migrations: %w", err)
