@@ -31,7 +31,7 @@ export const SessionClient: React.FC = () => {
 	};
 
 	const handleSessionEnded = () => {
-		setModalMessage('The author has ended the session.');
+		setModalMessage('The owner has ended the session.');
 	};
 
 	const leaveSession = () => {

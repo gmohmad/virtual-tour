@@ -28,7 +28,7 @@ export const ToursList: React.FC = () => {
 
 	const startSession = (tourId: string) => {
 		const sessionId = uuidv4();
-		navigate(`/session/${sessionId}/author/${tourId}`);
+		navigate(`/session/${sessionId}/owner/${tourId}`);
 	};
 
 	return (

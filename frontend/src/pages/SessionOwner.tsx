@@ -4,7 +4,7 @@ import { getTourById } from '../services/api';
 import { TourViewer } from '../components/TourViewer/TourViewer';
 import type { Tour } from '../types';
 
-export const SessionAuthor: React.FC = () => {
+export const SessionOwner: React.FC = () => {
 	const { sessionId, tourId } = useParams<{ sessionId: string; tourId: string }>();
 	const [tour, setTour] = useState<Tour | null>(null);
 	const [modalMessage, setModalMessage] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export const SessionAuthor: React.FC = () => {
 		<>
 		<TourViewer
 		key={tour.id}
-		mode="author"
+		mode="owner"
 		tourData={tour.data}
 		sessionId={sessionId!}
 		onWebSocketCreated={handleWebSocketCreated}

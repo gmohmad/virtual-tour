@@ -8,7 +8,7 @@ import { getClientId } from '../../utils/clientId';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface TourViewerProps {
-	mode: 'author' | 'client';
+	mode: 'owner' | 'client';
 	tourData: TourData;
 	sessionId: string;
 	onReady?: () => void;
@@ -33,12 +33,12 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 	const { user } = useAuth();
 
 	const [clientId] = useState(() => getClientId(mode, user?.id));
-	const wsPath = mode === 'author' ? '/create-session' : '/connect';
+	const wsPath = mode === 'owner' ? '/create-session' : '/connect';
 	const wsQuery = { session_id: sessionId, client_id: clientId };
 
 	const { sendMessage, lastMessage, ws } = useWebSocket(wsPath, wsQuery);
 
-	// For author: throttled state sender
+	// for owner: throttled state sender
 	const latestState = useRef({ nodeId: '', yaw: 0, pitch: 0, zoom: 0 });
 	const intervalRef = useRef<number>();
 
@@ -79,7 +79,7 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 			if (data?.zoomLevel !== undefined) viewerRef.current.zoom(data.zoomLevel);
 			break;
 			case 'session_ended':
-				console.log('Session ended by author');
+				console.log('Session ended by owner');
 			onSessionEnded?.();
 			break;
 			case 'error':
@@ -150,8 +150,8 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 				virtualTour.setNodes(nodesForPlugin, nodesForPlugin[0].id);
 			}
 
-			// Attach event listeners only for author mode
-			if (mode === 'author') {
+			// Attach event listeners only for owner mode
+			if (mode === 'owner') {
 				// Update refs on changes (no direct send)
 				virtualTour.addEventListener('node-changed', ({ node }: any) => {
 					latestState.current.nodeId = node.id;
@@ -188,11 +188,11 @@ export const TourViewer: React.FC<TourViewerProps> = ({
 		height="100vh"
 		width="100vw"
 		onReady={handleReady}
-		navbar={mode === 'author' ? ['caption', 'zoom', 'fullscreen'] : false}
-		mousewheel={mode === 'author'}
-		mousemove={mode === 'author'}
-		touchmoveTwoFingers={mode === 'author'}
-		keyboard={mode === 'author'}
+		navbar={mode === 'owner' ? ['caption', 'zoom', 'fullscreen'] : false}
+		mousewheel={mode === 'owner'}
+		mousemove={mode === 'owner'}
+		touchmoveTwoFingers={mode === 'owner'}
+		keyboard={mode === 'owner'}
 		/>
 	);
 };

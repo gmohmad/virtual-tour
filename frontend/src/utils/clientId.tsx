@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export const getClientId = (mode: 'author' | 'client', userId?: string): string => {
-	if (mode === 'author' && userId) {
+export const getClientId = (mode: 'owner' | 'client', userId?: string): string => {
+	if (mode === 'owner' && userId) {
 		return userId;
 	} else {
 		let deviceId = localStorage.getItem('deviceId');

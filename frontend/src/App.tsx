@@ -4,7 +4,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ToursList } from './pages/ToursList';
 import { TourEditor } from './pages/TourEditor';
-import { SessionAuthor } from './pages/SessionAuthor';
+import { SessionOwner } from './pages/SessionOwner';
 import { SessionClient } from './pages/SessionClient';
 
 const PrivateRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
@@ -20,7 +20,7 @@ function AppRoutes() {
 		<Route path="/tours" element={<PrivateRoute><ToursList /></PrivateRoute>} />
 		<Route path="/tours/new" element={<PrivateRoute><TourEditor /></PrivateRoute>} />
 		<Route path="/tours/edit/:id" element={<PrivateRoute><TourEditor /></PrivateRoute>} />
-		<Route path="/session/:sessionId/author/:tourId" element={<PrivateRoute><SessionAuthor /></PrivateRoute>} />
+		<Route path="/session/:sessionId/owner/:tourId" element={<PrivateRoute><SessionOwner /></PrivateRoute>} />
 		<Route path="/session/:sessionId/:tourId" element={<SessionClient />} />
 		<Route path="*" element={<Navigate to="/tours" />} />
 		</Routes>
