@@ -49,9 +49,14 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("GET /get-tour-by-id/{id}", common.AuthMiddleware(s.handleGetTourByID))
 	r.HandleFunc("GET /get-tours-by-user-id", common.AuthMiddleware(s.handleGetUserTours))
 	r.HandleFunc("POST /create-tour", common.AuthMiddleware(s.handleCreateTour))
-	r.HandleFunc("PUT /update-tour/{id}", common.AuthMiddleware(s.handleUpdateTour))
+	r.HandleFunc("PUT /update-tour", common.AuthMiddleware(s.handleUpdateTour))
 	r.HandleFunc("DELETE /delete-tour/{id}", common.AuthMiddleware(s.handleDeleteTour))
 	r.HandleFunc("POST /upload", common.AuthMiddleware(s.handleUpload))
+
+	r.HandleFunc("POST /create-company", common.AuthMiddleware(s.handleCreateCompany))
+	r.HandleFunc("PUT /delete-company", common.AuthMiddleware(s.handleUpdateCompany))
+	r.HandleFunc("DELETE /delete-company/{id}", common.AuthMiddleware(s.handleDeleteCompany))
+
 	r.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	c := cors.New(cors.Options{

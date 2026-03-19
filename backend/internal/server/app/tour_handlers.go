@@ -14,11 +14,13 @@ import (
 )
 
 type createTourRequest struct {
-	Name string          `json:"name"`
-	Data json.RawMessage `json:"data"`
+	Name      string          `json:"name"`
+	Data      json.RawMessage `json:"data"`
+	CompanyID uuid.UUID       `json:"company_id"`
 }
 
 type updateTourRequest struct {
+	ID   uuid.UUID       `json:"id"`
 	Name string          `json:"name"`
 	Data json.RawMessage `json:"data"`
 }
@@ -27,7 +29,9 @@ type tourResponse struct {
 	ID        string          `json:"id"`
 	Name      string          `json:"name"`
 	Data      json.RawMessage `json:"data"`
-	UserID    string          `json:"user_id"`
+	CompanyID string          `json:"company_id"`
+	CreatedBy string          `json:"created_by"`
+	UpdatedBy string          `json:"updated_by"`
 	CreatedAt string          `json:"created_at"`
 	UpdatedAt string          `json:"updated_at"`
 }
@@ -50,7 +54,7 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tour, err := s.storage.CreateTour(r.Context(), userID, req.Name, req.Data)
+	tour, err := s.storage.CreateTour(r.Context(), req.CompanyID, userID, req.Name, req.Data)
 	if err != nil {
 		http.Error(w, "Failed to create tour", http.StatusInternalServerError)
 		return
@@ -60,26 +64,23 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
-		UserID:    tour.UserID.String(),
+		CompanyID: tour.CompanyID.String(),
+		CreatedBy: tour.CreatedBy.String(),
+		UpdatedBy: tour.UpdatedBy.String(),
 		CreatedAt: tour.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: tour.UpdatedAt.Format(time.RFC3339),
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 	userID, err := common.GetUserIDFromContext(r.Context())
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	id, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
 		return
 	}
 
@@ -93,7 +94,7 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tour, err := s.storage.UpdateTour(r.Context(), id, userID, req.Name, req.Data)
+	tour, err := s.storage.UpdateTour(r.Context(), req.ID, userID, req.Name, req.Data)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Tour not found or you don't have permission", http.StatusNotFound)
@@ -107,29 +108,26 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
-		UserID:    tour.UserID.String(),
+		CompanyID: tour.CompanyID.String(),
+		CreatedBy: tour.CreatedBy.String(),
+		UpdatedBy: tour.UpdatedBy.String(),
 		CreatedAt: tour.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: tour.UpdatedAt.Format(time.RFC3339),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
-	userID, err := common.GetUserIDFromContext(r.Context())
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
 		return
 	}
 
-	err = s.storage.DeleteTour(r.Context(), id, userID)
-	if err != nil {
+	if err := s.storage.DeleteTour(r.Context(), id); err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Tour not found or you don't have permission", http.StatusNotFound)
 		} else {
@@ -162,12 +160,16 @@ func (s *Server) handleGetTourByID(w http.ResponseWriter, r *http.Request) {
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
-		UserID:    tour.UserID.String(),
+		CompanyID: tour.CompanyID.String(),
+		CreatedBy: tour.CreatedBy.String(),
+		UpdatedBy: tour.UpdatedBy.String(),
 		CreatedAt: tour.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: tour.UpdatedAt.Format(time.RFC3339),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +179,7 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tours, err := s.storage.GetToursByUserID(r.Context(), userID)
+	tours, err := s.storage.GetToursCreatedByUser(r.Context(), userID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve tours", http.StatusInternalServerError)
 		return
@@ -189,14 +191,18 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 			ID:        t.ID.String(),
 			Name:      t.Name,
 			Data:      t.Data,
-			UserID:    t.UserID.String(),
+			CompanyID: t.CompanyID.String(),
+			CreatedBy: t.CreatedBy.String(),
+			UpdatedBy: t.UpdatedBy.String(),
 			CreatedAt: t.CreatedAt.Format(time.RFC3339),
 			UpdatedAt: t.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
@@ -209,7 +215,6 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Generate a unique filename
 	ext := filepath.Ext(handler.Filename)
 	filename := time.Now().Format("20060102150405") + "_" + uuid.New().String() + ext
 	filepath := filepath.Join("./uploads", filename)
@@ -225,7 +230,6 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the public URL
 	publicURL := "/uploads/" + filename
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"url": publicURL})

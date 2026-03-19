@@ -11,44 +11,45 @@ import (
 
 type Tour struct {
 	ID        uuid.UUID
-	UserID    uuid.UUID
+	CompanyID uuid.UUID
 	Name      string
 	Data      json.RawMessage
+	CreatedBy *uuid.UUID
+	UpdatedBy *uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func (s *Storage) CreateTour(ctx context.Context, userID uuid.UUID, name string, data json.RawMessage) (*Tour, error) {
-	var tour Tour
-	query := `INSERT INTO tours (name, data, user_id) 
-	          VALUES ($1, $2, $3) 
-	          RETURNING id, name, data, user_id, created_at, updated_at`
-
-	if err := s.client.QueryRow(ctx, query, name, data, userID).Scan(
-		&tour.ID, &tour.Name, &tour.Data, &tour.UserID, &tour.CreatedAt, &tour.UpdatedAt,
-	); err != nil {
+func (s *Storage) CreateTour(
+	ctx context.Context, companyID uuid.UUID, userID uuid.UUID, name string, data json.RawMessage,
+) (*Tour, error) {
+	query := `INSERT INTO tours (name, data, created_by, updated_by, company_id)
+	          VALUES ($1, $2, $3, $3, $4)
+	          RETURNING id, name, data, company_id, created_by, updated_by, created_at, updated_at`
+	rows, err := s.client.Query(ctx, query, name, data, userID, companyID)
+	if err != nil {
 		return nil, err
 	}
-	return &tour, nil
+	defer rows.Close()
+	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[Tour])
 }
 
 func (s *Storage) UpdateTour(ctx context.Context, id, userID uuid.UUID, name string, data json.RawMessage) (*Tour, error) {
-	var tour Tour
 	query := `UPDATE tours 
-	          SET name = $3, data = $4, updated_at = NOW() 
-	          WHERE id = $1 AND user_id = $2
-	          RETURNING id, name, data, user_id, created_at, updated_at`
-	if err := s.client.QueryRow(ctx, query, id, userID, name, data).Scan(
-		&tour.ID, &tour.Name, &tour.Data, &tour.UserID, &tour.CreatedAt, &tour.UpdatedAt,
-	); err != nil {
+	          SET name = $3, data = $4, updated_by = $2, updated_at = NOW()
+	          WHERE id = $1
+	          RETURNING id, name, data, company_id, created_by, updated_by, created_at, updated_at`
+	rows, err := s.client.Query(ctx, query, id, userID, name, data)
+	if err != nil {
 		return nil, err
 	}
-	return &tour, nil
+	defer rows.Close()
+	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[Tour])
 }
 
-func (s *Storage) DeleteTour(ctx context.Context, id, userID uuid.UUID) error {
-	query := `DELETE FROM tours WHERE id = $1 AND user_id = $2`
-	commandTag, err := s.client.Exec(ctx, query, id, userID)
+func (s *Storage) DeleteTour(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM tours WHERE id = $1`
+	commandTag, err := s.client.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -59,30 +60,31 @@ func (s *Storage) DeleteTour(ctx context.Context, id, userID uuid.UUID) error {
 }
 
 func (s *Storage) GetTourByID(ctx context.Context, id uuid.UUID) (*Tour, error) {
-	var tour Tour
-	query := `SELECT id, name, data, user_id, created_at, updated_at FROM tours WHERE id = $1`
-	if err := s.client.QueryRow(ctx, query, id).Scan(
-		&tour.ID, &tour.Name, &tour.Data, &tour.UserID, &tour.CreatedAt, &tour.UpdatedAt,
-	); err != nil {
-		return nil, err
-	}
-	return &tour, nil
-}
-
-func (s *Storage) GetToursByUserID(ctx context.Context, userID uuid.UUID) ([]Tour, error) {
-	rows, err := s.client.Query(ctx, `SELECT id, name, data, user_id, created_at, updated_at FROM tours WHERE user_id = $1`, userID)
+	query := `SELECT id, name, data, company_id, created_by, updated_by, created_at, updated_at FROM tours WHERE id = $1`
+	rows, err := s.client.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[Tour])
+}
 
-	var tours []Tour
-	for rows.Next() {
-		var t Tour
-		if err := rows.Scan(&t.ID, &t.Name, &t.Data, &t.UserID, &t.CreatedAt, &t.UpdatedAt); err != nil {
-			return nil, err
-		}
-		tours = append(tours, t)
+func (s *Storage) GetToursCreatedByUser(ctx context.Context, userID uuid.UUID) ([]*Tour, error) {
+	query := `SELECT id, name, data, company_id, created_by, updated_by, created_at, updated_at FROM tours WHERE created_by = $1`
+	rows, err := s.client.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
 	}
-	return tours, rows.Err()
+	defer rows.Close()
+	return pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[Tour])
+}
+
+func (s *Storage) GetToursByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*Tour, error) {
+	query := `SELECT id, name, data, company_id, created_by, updated_by, created_at, updated_at FROM tours WHERE company_id = $1`
+	rows, err := s.client.Query(ctx, query, companyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[Tour])
 }

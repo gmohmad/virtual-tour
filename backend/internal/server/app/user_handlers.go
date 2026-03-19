@@ -8,7 +8,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type logRegRequest struct {
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type registerRequest struct {
+	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -20,11 +26,12 @@ type authResponse struct {
 
 type userJSON struct {
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	var req logRegRequest
+	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -35,7 +42,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.storage.CreateUser(r.Context(), req.Email, req.Password)
+	user, err := s.storage.CreateUser(r.Context(), req.Name, req.Email, req.Password)
 	if err != nil {
 		http.Error(w, "User already exists or other error", http.StatusConflict)
 		return
@@ -51,6 +58,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		Token: token,
 		User: &userJSON{
 			ID:    user.ID.String(),
+			Name:  user.Name,
 			Email: user.Email,
 		},
 	}
@@ -61,7 +69,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var req logRegRequest
+	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -92,6 +100,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Token: token,
 		User: &userJSON{
 			ID:    user.ID.String(),
+			Name:  user.Name,
 			Email: user.Email,
 		},
 	}
