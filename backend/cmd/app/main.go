@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/gmohmad/diploma/internal/config"
+	"github.com/gmohmad/diploma/internal/filemanager"
 	app_server "github.com/gmohmad/diploma/internal/server/app"
 	"github.com/gmohmad/diploma/internal/storage"
 	"github.com/gmohmad/diploma/internal/storage/postgres"
@@ -20,7 +21,7 @@ func main() {
 		log.Fatalf("failed setting up logger: %v", err)
 	}
 
-	cfg, err := config.MustLoad(os.Getenv("APP_CONFIG_PATH"))
+	cfg, err := config.MustLoad(os.Getenv("CONFIG_PATH"))
 	if err != nil {
 		logger.Fatal("failed loading config", zap.Error(err))
 	}
@@ -30,16 +31,21 @@ func main() {
 
 	postgresClient, err := postgres.NewClient(ctx, cfg.DB, logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal("failed creating postgres client", zap.Error(err))
 	}
 	defer postgresClient.Close()
 
 	if err := postgres.Migrate(cfg.DB, logger); err != nil {
-		log.Fatal(err)
+		logger.Fatal("failed applying migrations", zap.Error(err))
+	}
+
+	s3provider, err := filemanager.NewS3Provider(cfg.S3.Host, os.Getenv("S3_SECRET"), os.Getenv("S3_TOKEN"))
+	if err != nil {
+		logger.Fatal("failed creat", zap.Error(err))
 	}
 
 	storage := storage.NewStorage(postgresClient, logger)
-	server := app_server.New(cfg, logger, storage)
+	server := app_server.New(cfg, logger, storage, s3provider)
 	go func() {
 		if err := server.ListenAndServe(context.Background()); err != nil {
 			logger.Fatal("failed starting server", zap.Error(err))

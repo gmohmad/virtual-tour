@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gmohmad/diploma/internal/config"
+	fm "github.com/gmohmad/diploma/internal/filemanager"
 	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/gmohmad/diploma/internal/storage"
 	"github.com/rs/cors"
@@ -16,16 +17,18 @@ type Server struct {
 	logger  *zap.Logger
 	server  *http.Server
 	storage *storage.Storage
+	s3      *fm.S3Provider
 }
 
-func New(cfg *config.Config, logger *zap.Logger, storage *storage.Storage) *Server {
+func New(cfg *config.Config, logger *zap.Logger, storage *storage.Storage, s3 *fm.S3Provider) *Server {
 	ws := &Server{
-		cfg:     cfg,
-		logger:  logger,
-		storage: storage,
+		cfg:    cfg,
+		logger: logger,
 		server: &http.Server{
-			Addr: cfg.HTTPServer.Address,
+			Addr: cfg.HTTPServer.AppAddress,
 		},
+		storage: storage,
+		s3:      s3,
 	}
 	return ws
 }
@@ -45,19 +48,17 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("POST /login", s.handleLogin)
 	r.HandleFunc("POST /register", s.handleRegister)
 
-	r.HandleFunc("GET /public/tour/{id}", s.handleGetTourByID)
-	r.HandleFunc("GET /get-tour-by-id/{id}", common.AuthMiddleware(s.handleGetTourByID))
+	r.HandleFunc("GET /images/{path...}", s.serveImage)
+	r.HandleFunc("GET /get-tour-by-id/{id}", s.handleGetTourByID)
 	r.HandleFunc("GET /get-tours-by-user-id", common.AuthMiddleware(s.handleGetUserTours))
 	r.HandleFunc("POST /create-tour", common.AuthMiddleware(s.handleCreateTour))
 	r.HandleFunc("PUT /update-tour", common.AuthMiddleware(s.handleUpdateTour))
 	r.HandleFunc("DELETE /delete-tour/{id}", common.AuthMiddleware(s.handleDeleteTour))
-	r.HandleFunc("POST /upload", common.AuthMiddleware(s.handleUpload))
 
+	r.HandleFunc("GET /get-company/{id}", common.AuthMiddleware(s.handleGetCompanyByID))
 	r.HandleFunc("POST /create-company", common.AuthMiddleware(s.handleCreateCompany))
-	r.HandleFunc("PUT /delete-company", common.AuthMiddleware(s.handleUpdateCompany))
+	r.HandleFunc("PUT /update-company", common.AuthMiddleware(s.handleUpdateCompany))
 	r.HandleFunc("DELETE /delete-company/{id}", common.AuthMiddleware(s.handleDeleteCompany))
-
-	r.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.66.102:3000"},

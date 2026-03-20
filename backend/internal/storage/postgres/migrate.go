@@ -12,8 +12,8 @@ import (
 
 func Migrate(cfg *config.DB, logger *zap.Logger) error {
 	db := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
+		"postgres://%s:%s@%s/%s?sslmode=%s",
+		cfg.User, cfg.Password, cfg.Host, cfg.DBName, cfg.SSLMode,
 	)
 	source := fmt.Sprintf("file://%s", cfg.MigrationsPath)
 	m, err := migrate.New(source, db)

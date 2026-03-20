@@ -11,21 +11,28 @@ import (
 type Config struct {
 	Env         string `yaml:"env"`
 	*HTTPServer `yaml:"http_server"`
-	*DB
+	*S3         `yaml:"s3"`
+	*DB         `yaml:"db"`
 }
 
 type HTTPServer struct {
-	Address string `yaml:"address"`
+	LiveTourAddress string `yaml:"livetour_address"`
+	AppAddress      string `yaml:"app_address"`
 }
 
 type DB struct {
-	Host           string
-	Port           string
+	Host           string `yaml:"host"`
+	DBName         string `yaml:"db_name"`
+	SSLMode        string `yaml:"ssl_mode"`
+	MigrationsPath string `yaml:"migrations_path"`
 	User           string
 	Password       string
-	DBName         string
-	SSLMode        string
-	MigrationsPath string
+}
+
+type S3 struct {
+	Host       string `yaml:"host"`
+	Bucket     string `yaml:"bucket"`
+	ImagesPath string `yaml:"images_path"`
 }
 
 func MustLoad(configPath string) (*Config, error) {
@@ -38,15 +45,8 @@ func MustLoad(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("error reading config: %s", err)
 	}
 
-	cfg.DB = &DB{
-		Host:           envutil.GetEnvOrFatal("POSTGRES_HOST"),
-		Port:           envutil.GetEnvOrFatal("POSTGRES_PORT"),
-		User:           envutil.GetEnvOrFatal("POSTGRES_USER"),
-		Password:       envutil.GetEnvOrFatal("POSTGRES_PASSWORD"),
-		DBName:         envutil.GetEnvOrFatal("POSTGRES_DB"),
-		SSLMode:        envutil.GetEnvOrFatal("SSL_MODE"),
-		MigrationsPath: envutil.GetEnvOrFatal("MIGRATIONS_PATH"),
-	}
+	cfg.DB.User = envutil.GetEnvOrFatal("POSTGRES_USER")
+	cfg.DB.Password = envutil.GetEnvOrFatal("POSTGRES_PASSWORD")
 
 	return &cfg, nil
 }

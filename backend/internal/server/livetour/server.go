@@ -28,7 +28,7 @@ func New(cfg *config.Config, logger *zap.Logger, hub *livetour.Hub) *Server {
 		logger: logger,
 		hub:    hub,
 		server: &http.Server{
-			Addr: cfg.HTTPServer.Address,
+			Addr: cfg.HTTPServer.LiveTourAddress,
 		},
 	}
 	return ws

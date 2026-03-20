@@ -26,8 +26,8 @@ type Client interface {
 
 func NewClient(ctx context.Context, cfg *config.DB, logger *zap.Logger) (pool Client, err error) {
 	dsn := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
+		"postgresql://%s:%s@%s/%s?sslmode=%s",
+		cfg.User, cfg.Password, cfg.Host, cfg.DBName, cfg.SSLMode,
 	)
 
 	for i := range maxRetries {

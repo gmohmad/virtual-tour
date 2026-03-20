@@ -5,33 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gmohmad/diploma/internal/auth"
+	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/jackc/pgx/v5"
 )
 
-type loginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type registerRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type authResponse struct {
-	Token string    `json:"token"`
-	User  *userJSON `json:"user"`
-}
-
-type userJSON struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
+	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -54,9 +33,9 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := authResponse{
+	resp := dto.AuthResponse{
 		Token: token,
-		User: &userJSON{
+		User: &dto.UserJSON{
 			ID:    user.ID.String(),
 			Name:  user.Name,
 			Email: user.Email,
@@ -69,7 +48,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
+	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -96,9 +75,9 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := authResponse{
+	resp := dto.AuthResponse{
 		Token: token,
-		User: &userJSON{
+		User: &dto.UserJSON{
 			ID:    user.ID.String(),
 			Name:  user.Name,
 			Email: user.Email,

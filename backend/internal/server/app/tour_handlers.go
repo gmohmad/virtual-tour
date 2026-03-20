@@ -1,40 +1,17 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
-
-type createTourRequest struct {
-	Name      string          `json:"name"`
-	Data      json.RawMessage `json:"data"`
-	CompanyID uuid.UUID       `json:"company_id"`
-}
-
-type updateTourRequest struct {
-	ID   uuid.UUID       `json:"id"`
-	Name string          `json:"name"`
-	Data json.RawMessage `json:"data"`
-}
-
-type tourResponse struct {
-	ID        string          `json:"id"`
-	Name      string          `json:"name"`
-	Data      json.RawMessage `json:"data"`
-	CompanyID string          `json:"company_id"`
-	CreatedBy string          `json:"created_by"`
-	UpdatedBy string          `json:"updated_by"`
-	CreatedAt string          `json:"created_at"`
-	UpdatedAt string          `json:"updated_at"`
-}
 
 func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 	userID, err := common.GetUserIDFromContext(r.Context())
@@ -42,25 +19,33 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-	var req createTourRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	req, err := parseTourReqFromMultipart[dto.CreateTourRequest](r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if req.Name == "" {
-		http.Error(w, "Tour name is required", http.StatusBadRequest)
+	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, req.CompanyID.String())
+	if err != nil {
+		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
 		return
 	}
+	for i, node := range req.Data.Nodes {
+		node.Panorama = uploaded[i]
+	}
 
-	tour, err := s.storage.CreateTour(r.Context(), req.CompanyID, userID, req.Name, req.Data)
+	tour, err := s.storage.CreateTour(r.Context(), req.CompanyID, userID, req.Name, *req.Data)
 	if err != nil {
 		http.Error(w, "Failed to create tour", http.StatusInternalServerError)
 		return
 	}
+	updateImagePaths(s.cfg.AppAddress, &tour.Data)
 
-	resp := tourResponse{
+	resp := dto.TourResponse{
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
@@ -84,17 +69,32 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateTourRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
-	if req.Name == "" {
-		http.Error(w, "Tour name cannot be empty", http.StatusBadRequest)
+	req, err := parseTourReqFromMultipart[dto.UpdateTourRequest](r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	tour, err := s.storage.UpdateTour(r.Context(), req.ID, userID, req.Name, req.Data)
+	existingTour, err := s.storage.GetTourByID(r.Context(), req.ID)
+	if err != nil {
+		http.Error(w, "tour with provided not found", http.StatusNotFound)
+		return
+	}
+
+	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, existingTour.CompanyID.String())
+	if err != nil {
+		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
+		return
+	}
+	for i, node := range req.Data.Nodes {
+		node.Panorama = uploaded[i]
+	}
+
+	tour, err := s.storage.UpdateTour(r.Context(), req.ID, userID, req.Name, *req.Data)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Tour not found or you don't have permission", http.StatusNotFound)
@@ -103,8 +103,18 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	updateImagePaths(s.cfg.AppAddress, &tour.Data)
 
-	resp := tourResponse{
+	keysToClean := make([]string, 0, len(existingTour.Data.Nodes))
+	for _, node := range existingTour.Data.Nodes {
+		keysToClean = append(keysToClean, node.Panorama)
+	}
+	if err := s.s3.DeleteFiles(s.cfg.S3.Bucket, keysToClean); err != nil {
+		http.Error(w, "failed clearing old files", http.StatusInternalServerError)
+		return
+	}
+
+	resp := dto.TourResponse{
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
@@ -156,7 +166,7 @@ func (s *Server) handleGetTourByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := tourResponse{
+	resp := dto.TourResponse{
 		ID:        tour.ID.String(),
 		Name:      tour.Name,
 		Data:      tour.Data,
@@ -185,9 +195,9 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]tourResponse, len(tours))
+	resp := make([]dto.TourResponse, len(tours))
 	for i, t := range tours {
-		resp[i] = tourResponse{
+		resp[i] = dto.TourResponse{
 			ID:        t.ID.String(),
 			Name:      t.Name,
 			Data:      t.Data,
@@ -205,32 +215,17 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 20)
-
-	file, handler, err := r.FormFile("image")
+func (s *Server) serveImage(w http.ResponseWriter, r *http.Request) {
+	obj, err := s.s3.Download(r.URL.Path, s.cfg.S3.Bucket)
 	if err != nil {
-		http.Error(w, "Failed to read file", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	ext := filepath.Ext(handler.Filename)
-	filename := time.Now().Format("20060102150405") + "_" + uuid.New().String() + ext
-	filepath := filepath.Join("./uploads", filename)
-
-	dst, err := os.Create(filepath)
-	if err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
-		return
-	}
-	defer dst.Close()
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		http.Error(w, "Failed downloading from s3", http.StatusInternalServerError)
 		return
 	}
 
-	publicURL := "/uploads/" + filename
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"url": publicURL})
+	if _, err := io.Copy(w, bytes.NewReader(obj)); err != nil {
+		http.Error(w, "Failed writing body", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

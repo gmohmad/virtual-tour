@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("failed setting up logger: %v", err)
 	}
 
-	cfg, err := config.MustLoad(os.Getenv("LIVETOUR_CONFIG_PATH"))
+	cfg, err := config.MustLoad(os.Getenv("CONFIG_PATH"))
 	if err != nil {
 		logger.Fatal("failed loading config", zap.Error(err))
 	}

@@ -1,0 +1,14 @@
+http_server:
+  livetour_address: 0.0.0.0:8081
+  app_address: 0.0.0.0:8080
+
+s3:
+  host: http://localhost:9000
+  bucket: diploma
+  images_path: images/
+
+db:
+  host: localhost:5432
+  db_name: diploma
+  ssl_mode: disable
+  migrations_path: migrations/
