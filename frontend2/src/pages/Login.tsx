@@ -7,7 +7,7 @@ export const Login: React.FC = () => {
 	const [password, setPassword] = useState("");
 	const { login } = useAuth();
 
-	const submit = async (e: React.SubmitEvent) => {
+	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		try {
 			await login(email, password)
@@ -19,7 +19,7 @@ export const Login: React.FC = () => {
 	return (
 		<div> 
 			<h1>LOGIN</h1>
-			<form onSubmit={submit}>
+			<form onSubmit={handleSubmit}>
 				<label>Email</label>
 				<input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
 

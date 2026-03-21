@@ -9,7 +9,7 @@ export const Register: React.FC = () => {
 	const navigate = useNavigate();
 	const { register } = useAuth();
 
-	const submit = async (e: React.SubmitEvent) => {
+	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		try {
 			await register(name, email, password);
@@ -22,7 +22,7 @@ export const Register: React.FC = () => {
 	return (
 		<div> 
 			<h1>LOGIN</h1>
-			<form onSubmit={submit}>
+			<form onSubmit={handleSubmit}>
 				<label>Name</label>
 				<input type="text" minLength={3} maxLength={16} value={name} onChange={e => setName(e.target.value)} required />
 

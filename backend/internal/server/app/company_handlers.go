@@ -6,11 +6,18 @@ import (
 	"time"
 
 	"github.com/gmohmad/diploma/internal/models/dto"
+	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 func (s *Server) handleCreateCompany(w http.ResponseWriter, r *http.Request) {
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var req dto.CreateCompanyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -22,7 +29,7 @@ func (s *Server) handleCreateCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	company, err := s.storage.CreateCompany(r.Context(), req.Name)
+	company, err := s.storage.CreateCompany(r.Context(), userID, req.Name)
 	if err != nil {
 		http.Error(w, "Failed to create company", http.StatusInternalServerError)
 		return
@@ -115,6 +122,39 @@ func (s *Server) handleGetCompanyByID(w http.ResponseWriter, r *http.Request) {
 		Name:      company.Name,
 		CreatedAt: company.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleGetCompaniesOfUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	companies, err := s.storage.GetCompaniesOfUser(r.Context(), userID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Company not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	resp := make([]dto.CompanyWithUserRoleResponse, 0, len(companies))
+	for _, company := range companies {
+		resp = append(resp, dto.CompanyWithUserRoleResponse{
+			ID:        company.ID.String(),
+			Name:      company.Name,
+			CreatedAt: company.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
+			UserRole:  company.UserRole,
+		})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {

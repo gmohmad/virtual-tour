@@ -4,6 +4,9 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register';
 import { CompanyEditor } from './pages/CompanyEditor';
+import { TourEditor } from './pages/TourEditor';
+import { CompaniesList } from './pages/CompaniesList';
+import { CompanyViewer } from './pages/CompanyViewer';
 
 function AppRoutes() {
 	return (
@@ -13,6 +16,11 @@ function AppRoutes() {
 
 			<Route path="/company/new" element={<CompanyEditor />} />
 			<Route path="/company/edit/:id" element={<CompanyEditor />} />
+
+			<Route path="/companies/my" element={<CompaniesList />} />
+			<Route path="/company/:id" element={<CompanyViewer />} />
+			<Route path="/company/:id/tours/new" element={<TourEditor />} />
+			<Route path="/company/:id/tours/edit/:tourId" element={<TourEditor />} />
 		</Routes>
 	);
 }

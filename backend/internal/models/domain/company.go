@@ -12,3 +12,8 @@ type Company struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type CompanyWithUserRole struct {
+	Company
+	UserRole string
+}

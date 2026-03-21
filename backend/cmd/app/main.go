@@ -39,7 +39,7 @@ func main() {
 		logger.Fatal("failed applying migrations", zap.Error(err))
 	}
 
-	s3provider, err := filemanager.NewS3Provider(cfg.S3.Host, os.Getenv("S3_SECRET"), os.Getenv("S3_TOKEN"))
+	s3provider, err := filemanager.NewS3Provider(cfg.S3.Host, os.Getenv("S3_TOKEN"), os.Getenv("S3_SECRET"))
 	if err != nil {
 		logger.Fatal("failed creat", zap.Error(err))
 	}

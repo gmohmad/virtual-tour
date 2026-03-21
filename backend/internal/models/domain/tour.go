@@ -7,10 +7,10 @@ import (
 )
 
 type Tour struct {
-	Name      string     `json:"name"`
-	Data      TourData   `json:"data"`
 	ID        uuid.UUID  `json:"id"`
 	CompanyID uuid.UUID  `json:"company_id"`
+	Name      string     `json:"name"`
+	Data      TourData   `json:"data"`
 	CreatedBy *uuid.UUID `json:"created_by"`
 	UpdatedBy *uuid.UUID `json:"updated_by"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -26,7 +26,6 @@ type TourNode struct {
 	Name     string      `json:"name"`
 	Panorama string      `json:"panorama"`
 	Links    []*TourLink `json:"links,omitempty"`
-	ImageKey string      `json:"imageKey"`
 }
 
 type TourLink struct {

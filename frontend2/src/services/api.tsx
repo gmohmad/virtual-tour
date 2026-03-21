@@ -21,7 +21,11 @@ export const register = (name: string, email: string, password: string) => {
 
 // company
 export const getCompanyByID = (id: string) => {
-	return api.get(`/get-company-by-id/${id}`);
+	return api.get(`/get-company/${id}`);
+};
+
+export const getCompaniesOfUser = () => {
+	return api.get(`/get-user-companies`);
 };
 
 export const createCompany = (name: string) => {
@@ -41,16 +45,20 @@ export const getTourByID = (id: string) => {
 	return api.get(`/get-tour-by-id/${id}`);
 };
 
-export const getToursByUserID = () => {
-	return api.get("/get-tours-by-user-id");
+export const getUserTours = () => {
+	return api.get("/get-user-tours");
 };
 
-export const createTour = (name: string, data: any, companyID: string) => {
-	return api.post("/create-tour", { name, data, companyID });
+export const getCompanyTours = (companyId: string) => {
+	return api.get(`/get-company-tours/${companyId}`);
 };
 
-export const updateTour = (id: string, name: string, data: any) => {
-	return api.put("/update-tour", { id, name, data });
+export const createTour = (formData: FormData) => {
+  return api.post("/create-tour", formData);
+};
+
+export const updateTour = (formData: FormData) => {
+  return api.put(`/update-tour`, formData);
 };
 
 export const deleteTour = (id: string) => {

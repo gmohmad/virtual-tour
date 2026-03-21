@@ -215,6 +215,39 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleGetToursByCompanyID(w http.ResponseWriter, r *http.Request) {
+	companyID, err := uuid.Parse(r.PathValue("companyId"))
+	if err != nil {
+		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
+		return
+	}
+
+	tours, err := s.storage.GetToursByCompanyID(r.Context(), companyID)
+	if err != nil {
+		http.Error(w, "Failed to retrieve tours", http.StatusInternalServerError)
+		return
+	}
+
+	resp := make([]dto.TourResponse, len(tours))
+	for i, t := range tours {
+		resp[i] = dto.TourResponse{
+			ID:        t.ID.String(),
+			Name:      t.Name,
+			Data:      t.Data,
+			CompanyID: t.CompanyID.String(),
+			CreatedBy: t.CreatedBy.String(),
+			UpdatedBy: t.UpdatedBy.String(),
+			CreatedAt: t.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: t.UpdatedAt.Format(time.RFC3339),
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
+}
+
 func (s *Server) serveImage(w http.ResponseWriter, r *http.Request) {
 	obj, err := s.s3.Download(r.URL.Path, s.cfg.S3.Bucket)
 	if err != nil {
@@ -226,6 +259,4 @@ func (s *Server) serveImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed writing body", http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
