@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
+	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
@@ -20,7 +20,7 @@ type requestData struct {
 }
 
 func parseTourReqFromMultipart(r *http.Request) (*dto.TourRequest, error) {
-	data := r.FormValue("data")
+	data := r.FormValue(config.DataKey)
 	if data == "" {
 		return nil, fmt.Errorf("missing data part")
 	}
@@ -32,7 +32,7 @@ func parseTourReqFromMultipart(r *http.Request) (*dto.TourRequest, error) {
 		return nil, fmt.Errorf("tour name is empty")
 	}
 	if len(req.Data.Nodes) != len(r.MultipartForm.File) {
-		return nil, fmt.Errorf("amount of provided file not equal to amount of nodes")
+		return nil, fmt.Errorf("amount of provided images not equal to amount of nodes")
 	}
 	return &req, nil
 }
@@ -50,34 +50,27 @@ func parseCompanyReq(r *http.Request) (*dto.CompanyRequest, error) {
 
 func getRequestData(r *http.Request, fields map[string]struct{}) (*requestData, error) {
 	var rd requestData
-	if _, ok := fields["user"]; ok {
+	if _, ok := fields[config.UserIDKey]; ok {
 		userID, err := common.GetUserIDFromContext(r.Context())
 		if err != nil {
-			return nil, fmt.Errorf("Unauthorized")
+			return nil, domain.ErrUnathorized
 		}
 		rd.userID = userID
 	}
-	if _, ok := fields["company"]; ok {
-		companyID, err := uuid.Parse(r.PathValue("companyId"))
+	if _, ok := fields[config.CompanyIDKey]; ok {
+		companyID, err := uuid.Parse(r.PathValue(config.CompanyIDKey))
 		if err != nil {
 			return nil, fmt.Errorf("Invalid companyID")
 		}
 		rd.companyID = companyID
 
 	}
-	if _, ok := fields["tour"]; ok {
-		tourID, err := uuid.Parse(r.PathValue("tourId"))
+	if _, ok := fields[config.TourIDkey]; ok {
+		tourID, err := uuid.Parse(r.PathValue(config.TourIDkey))
 		if err != nil {
 			return nil, fmt.Errorf("Invalid tourID")
 		}
 		rd.tourID = tourID
-
 	}
 	return &rd, nil
-}
-
-func updateImagePaths(address string, tourData *domain.TourData) {
-	for _, node := range tourData.Nodes {
-		node.Panorama = path.Join(address, node.Panorama)
-	}
 }

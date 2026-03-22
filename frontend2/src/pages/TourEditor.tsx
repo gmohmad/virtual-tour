@@ -1,7 +1,7 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { createTour, getTourByID, updateTour } from "../services/api";
+import { createTour, getTourByID, updateTour } from "../services/appApi";
 import type { TourLink, TourNode } from "../types/tour";
 
 export const TourEditor: React.FC = () => {
@@ -18,11 +18,6 @@ export const TourEditor: React.FC = () => {
 			setNodes(resp.data.data.nodes);
 		});
 	}, [tourId]);
-
-	const getImageUrl = (key: string) => {
-		if (key.startsWith('blob:')) return key;
-		return `${import.meta.env.VITE_API_BASE_URL}/${key}`;
-	};
 
 	const addNode = () => {
 		const newNodeId = `node${nodes.length + 1}`;
@@ -83,11 +78,28 @@ export const TourEditor: React.FC = () => {
 		updateNode(idx, "panorama", "");
 	}
 
-	const handleSubmit = (e: React.SubmitEvent) => {
+	const getImageUrl = (key: string) => {
+		if (key.startsWith('blob:')) return key;
+		return `${import.meta.env.VITE_APP_API_URL}/${key}`;
+	};
+
+	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		const payload = {id: tourId, name: name, company_id: companyId, data: {nodes: nodes }};
 		const formData = new FormData();
 		formData.append("data", JSON.stringify(payload));
+
+		// TODO: fix image upload on update
+		const fetchPromises = nodes.map(async (node, idx) => {
+			if (nodeFiles[node.id] || !node.panorama) return;
+
+			const res = await fetch(getImageUrl(node.panorama));
+			const blob = await res.blob();
+			const file = new File([blob], `existing_${idx}.jpg`, { type: blob.type });
+			nodeFiles[node.id] = file;
+		});
+		await Promise.all(fetchPromises);
+
 		Object.entries(nodeFiles).forEach(([idx, file]) => {
 			formData.append(`img_${idx}`, file);
 		});
@@ -136,7 +148,7 @@ export const TourEditor: React.FC = () => {
 			<label>Links to other rooms</label>
 			{node.links?.map((link, linkIdx) => (
 				<div key={linkIdx}>
-				<select value={link.nodeId} onChange={e => updateLink(idx, linkIdx, "nodeId", e.target.value)}>
+				<select value={link.nodeId} onChange={e => updateLink(idx, linkIdx, "nodeId", e.target.value)} required >
 				<option value="">Select target room</option>
 				{nodes.map(n => (
 					<option key={n.id} value={n.id} disabled={n.id === node.id}>{n.name}</option>

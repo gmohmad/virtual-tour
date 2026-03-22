@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Login: React.FC = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const { login } = useAuth();
+	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		try {
 			await login(email, password)
+			navigate("/companies/my")
 		} catch (err) {
 			alert(`Login failed: ${err.response.data}`)
 		}

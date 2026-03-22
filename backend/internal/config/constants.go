@@ -1,9 +1,12 @@
 package config
 
 const (
-	SessionIDKey = "session_id"
-	ClientIDKey  = "client_id"
-	UserIDKey    = "userID"
+	DataKey      = "data"
+	UserIDKey    = "userId"
+	CompanyIDKey = "companyId"
+	TourIDkey    = "tourId"
+	SessionIDKey = "sessionId"
+	ClientIDKey  = "clientId"
 
 	OwnerRole  = "owner"
 	AdminRole  = "admin"

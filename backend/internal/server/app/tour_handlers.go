@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
@@ -16,7 +17,7 @@ import (
 )
 
 func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -49,7 +50,6 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	updateImagePaths(s.cfg.AppAddress, &tour.Data)
 
 	resp := dto.TourResponse{
 		ID:        tour.ID.String(),
@@ -69,12 +69,11 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}, "tour": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}, config.TourIDkey: {}})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	if err := r.ParseMultipartForm(50 << 20); err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
@@ -109,7 +108,6 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	updateImagePaths(s.cfg.AppAddress, &tour.Data)
 
 	keysToClean := make([]string, 0, len(existingTour.Data.Nodes))
 	for _, node := range existingTour.Data.Nodes {
@@ -137,7 +135,7 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}, "tour": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}, config.TourIDkey: {}})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -170,7 +168,7 @@ func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetTourByID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("tourId"))
+	id, err := uuid.Parse(r.PathValue(config.TourIDkey))
 	if err != nil {
 		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
 		return
@@ -236,7 +234,7 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetToursByCompanyID(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

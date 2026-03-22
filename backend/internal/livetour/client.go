@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
@@ -16,17 +17,17 @@ const (
 )
 
 type Client struct {
-	id     string
+	id     uuid.UUID
 	conn   *websocket.Conn
 	logger *zap.Logger
 }
 
 type clientMessage struct {
-	ClientID string
+	ClientID uuid.UUID
 	Data     []byte
 }
 
-func NewClient(logger *zap.Logger, id string, conn *websocket.Conn) *Client {
+func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn) *Client {
 	return &Client{
 		id:     id,
 		conn:   conn,

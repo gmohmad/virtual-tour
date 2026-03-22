@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom"
-import { createCompany, getCompanyByID, updateCompany } from "../services/api";
+import { createCompany, getCompanyByID, updateCompany } from "../services/appApi";
 
 export const CompanyEditor: React.FC = () => {
 	const navigate = useNavigate();

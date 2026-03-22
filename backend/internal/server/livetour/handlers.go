@@ -1,67 +1,80 @@
 package livetour
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gmohmad/diploma/internal/config"
 	livetour "github.com/gmohmad/diploma/internal/livetour"
+	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
+	"github.com/google/uuid"
 )
 
 func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
-	sessionID, err := common.GetValFromQueryParams(config.SessionIDKey, r)
+	userID, err := common.GetUserIDFromContext(r.Context())
 	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	clientID, err := common.GetValFromQueryParams(config.ClientIDKey, r)
-	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := s.hub.CreateSession(sessionID, livetour.NewClient(s.logger, clientID, conn)); err != nil {
-		conn.WriteJSON(map[string]string{
-			"type":  "error",
-			"error": err.Error(),
-		})
-		conn.Close()
-		return
+	session := s.hub.CreateSession(userID)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
+		ID:         session.GetID(),
+		OwnerID:    session.GetOwnerID(),
+		ClientsLen: session.GetClientsAmount(),
+	}); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
 	}
 }
 
 func (s *Server) handleEndSession(w http.ResponseWriter, r *http.Request) {
-	sessionID, err := common.GetValFromQueryParams(config.SessionIDKey, r)
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
 	if err != nil {
 		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	clientID, err := common.GetValFromQueryParams(config.ClientIDKey, r)
-	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	s.hub.EndSession(sessionID, clientID)
+	s.hub.EndSession(sessionID, userID)
 	common.WriteResponse(w, "session ended", http.StatusOK)
 }
 
-func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) {
-	sessionID, err := common.GetValFromQueryParams(config.SessionIDKey, r)
+func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
 	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid session id", http.StatusBadRequest)
+		return
+	}
+	session, err := s.hub.GetSession(sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	clientID, err := common.GetValFromQueryParams(config.ClientIDKey, r)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
+		ID:         session.GetID(),
+		OwnerID:    session.GetOwnerID(),
+		ClientsLen: session.GetClientsAmount(),
+	}); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) {
+	clientID, err := uuid.Parse(r.URL.Query().Get(config.ClientIDKey))
+	if err != nil {
+		http.Error(w, "Invalid client id", http.StatusBadRequest)
+		return
+	}
+
+	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
 	if err != nil {
 		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
 		return

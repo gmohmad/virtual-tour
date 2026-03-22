@@ -41,6 +41,13 @@ func (am *AsyncMap[K, V]) Range(f func(key K, value V)) {
 	am.m.RUnlock()
 }
 
+func (am *AsyncMap[K, V]) Len() int {
+	am.m.RLock()
+	length := len(am.data)
+	am.m.RUnlock()
+	return length
+}
+
 func (am *AsyncMap[K, V]) Reset() {
 	am.m.Lock()
 	am.data = make(map[K]V)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gmohmad/diploma/internal/config"
 	livetour "github.com/gmohmad/diploma/internal/livetour"
+	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
@@ -46,9 +47,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 func (s *Server) setupHandler() {
 	r := http.NewServeMux()
 
-	r.HandleFunc("GET /connect", s.handleConnectToSession)
-	r.HandleFunc("GET /end-session", s.handleEndSession)
-	r.HandleFunc("GET /create-session", s.handleCreateSession)
+	r.HandleFunc("GET /connect/{sessionId}", s.handleConnectToSession)
+	r.HandleFunc("GET /get-session/{sessionId}", s.handleGetSession)
+	r.HandleFunc("DELETE /end-session/{sessionId}", common.AuthMiddleware(s.handleEndSession))
+	r.HandleFunc("POST /create-session", common.AuthMiddleware(s.handleCreateSession))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.66.102:3000"},

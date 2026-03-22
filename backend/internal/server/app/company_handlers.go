@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
@@ -44,7 +45,7 @@ func (s *Server) handleCreateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUpdateCompany(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -78,7 +79,7 @@ func (s *Server) handleUpdateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeleteCompany(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -97,7 +98,7 @@ func (s *Server) handleDeleteCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetCompanyByID(w http.ResponseWriter, r *http.Request) {
-	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

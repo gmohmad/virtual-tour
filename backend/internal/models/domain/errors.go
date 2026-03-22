@@ -2,4 +2,7 @@ package domain
 
 import "fmt"
 
-var ErrInsufficientPermissions = fmt.Errorf("insufficient permissions")
+var (
+	ErrUnathorized             = fmt.Errorf("unathorized")
+	ErrInsufficientPermissions = fmt.Errorf("insufficient permissions")
+)

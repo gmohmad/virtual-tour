@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { deleteTour, getCompanyByID, getCompanyTours } from "../services/api";
-import { Link, useParams } from "react-router-dom";
+import { deleteTour, getCompanyByID, getCompanyTours } from "../services/appApi";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Company } from "../types/company";
 import type { Tour } from "../types/tour";
+import { createSession } from "../services/livetourApi";
 
 export const CompanyViewer: React.FC = () => {
 	const { companyId } = useParams();
 	const [company, setCompany] = useState<Company>({id: "", name: "", created_at: "", updated_at: "", user_role: ""});
 	const [tours, setTours] = useState<Tour[]>([]);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!companyId) return;
@@ -27,6 +29,10 @@ export const CompanyViewer: React.FC = () => {
 		if (confirm('Are you sure?') && companyId) {
 			await deleteTour(companyId, tourId);
 		}
+	}
+
+	const handleCreateSession = async (tourId: string) => {
+		createSession().then(resp => {navigate(`/session/${tourId}/${resp.data.id}`)});
 	}
 
 	return (
@@ -50,6 +56,7 @@ export const CompanyViewer: React.FC = () => {
 			<small>Last Updated: by {tour.updated_at} at {tour.updated_at}</small>
 			<Link to={`/company/${companyId}/tours/edit/${tour.id}`}>Edit</Link>
 			<button onClick={() => handleDeleteTour(tour.id)}>Delete</button>
+			<button onClick={() => handleCreateSession(tour.id)}>Start Session</button>
 			</li>
 		))}
 		</ul>

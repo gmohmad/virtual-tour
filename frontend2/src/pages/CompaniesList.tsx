@@ -1,11 +1,12 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { deleteCompany, getCompaniesOfUser } from "../services/api";
+import { deleteCompany, getCompaniesOfUser } from "../services/appApi";
 import type { Company } from "../types/company";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const CompaniesList: React.FC = () => {
 	const [companies, setCompanies] = useState<Company[]>([]);
+	const navigate = useNavigate();
 
 	useEffect(() => {loadCompanies()}, []);
 
@@ -38,10 +39,11 @@ export const CompaniesList: React.FC = () => {
 			{company.user_role === "owner" ? 
 				<div>
 				<button onClick={() => handleDelete(company.id)}>Delete</button>
-				<button onClick={() => handleDelete(company.id)}>Edit</button>
+				<button onClick={() => navigate(`/company/edit/${company.id}`)}>Edit</button>
+				<button onClick={() => navigate(`/company/${company.id}`)}>Veew</button>
 				</div>
 				:
-				<button onClick={() => console.log("Edit")}>Leave</button>
+				<button onClick={() => console.log("Leave")}>Leave</button>
 			}
 			<Link to={`/company/${company.id}`}>View</Link>
 			</li>

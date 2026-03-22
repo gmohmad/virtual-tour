@@ -29,6 +29,7 @@ type TourNode struct {
 }
 
 type TourLink struct {
+	NodeID   string       `json:"nodeId"`
 	Position LinkPosition `json:"position"`
 }
 

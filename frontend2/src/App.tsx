@@ -7,6 +7,7 @@ import { CompanyEditor } from './pages/CompanyEditor';
 import { TourEditor } from './pages/TourEditor';
 import { CompaniesList } from './pages/CompaniesList';
 import { CompanyViewer } from './pages/CompanyViewer';
+import { TourViewer } from './pages/TourViewer';
 
 function AppRoutes() {
 	return (
@@ -16,11 +17,13 @@ function AppRoutes() {
 
 			<Route path="/company/new" element={<CompanyEditor />} />
 			<Route path="/company/edit/:companyId" element={<CompanyEditor />} />
+			<Route path="/company/edit/:companyId" element={<CompanyEditor />} />
 
 			<Route path="/companies/my" element={<CompaniesList />} />
 			<Route path="/company/:companyId" element={<CompanyViewer />} />
 			<Route path="/company/:companyId/tours/new" element={<TourEditor />} />
 			<Route path="/company/:companyId/tours/edit/:tourId" element={<TourEditor />} />
+			<Route path="/session/:tourId/:sessionId" element={<TourViewer />} />
 		</Routes>
 	);
 }
