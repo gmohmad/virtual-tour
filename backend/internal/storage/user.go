@@ -9,6 +9,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func (s *Storage) GetUserRole(ctx context.Context, userID, companyID uuid.UUID) (string, error) {
+	query := `SELECT role FROM company_roles WHERE user_id = $1 AND company_id = $2`
+	rows, err := s.client.Query(ctx, query, userID, companyID)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	return pgx.CollectOneRow(rows, pgx.RowTo[string])
+}
+
 func (s *Storage) CreateUser(ctx context.Context, name, email, password string) (*domain.User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

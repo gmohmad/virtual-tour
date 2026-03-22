@@ -6,7 +6,7 @@ import type { TourLink, TourNode } from "../types/tour";
 
 export const TourEditor: React.FC = () => {
 	const navigate = useNavigate();
-	const { id, tourId } = useParams();
+	const { companyId, tourId } = useParams();
 	const [name, setName] = useState("");
 	const [nodes, setNodes] = useState<TourNode[]>([{ id: "node1", name: "Room 1", panorama: "", links: [] }]);
 	const [nodeFiles, setNodeFiles] = useState<{ [nodeId: string]: File }>({});
@@ -85,7 +85,7 @@ export const TourEditor: React.FC = () => {
 
 	const handleSubmit = (e: React.SubmitEvent) => {
 		e.preventDefault();
-		const payload = {id: tourId, name: name, company_id: id, data: {nodes: nodes }};
+		const payload = {id: tourId, name: name, company_id: companyId, data: {nodes: nodes }};
 		const formData = new FormData();
 		formData.append("data", JSON.stringify(payload));
 		Object.entries(nodeFiles).forEach(([idx, file]) => {
@@ -93,12 +93,12 @@ export const TourEditor: React.FC = () => {
 		});
 
 		try {
-			if (tourId) {
-				updateTour(formData);
-			} else {
-				createTour(formData);
+			if (companyId && tourId) {
+				updateTour(companyId, tourId, formData);
+			} else if (companyId) {
+				createTour(companyId, formData);
 			}
-			navigate(`/company/${id}`)
+			navigate(`/company/${companyId}`)
 		} catch (err) {
 			alert(`Edit\\Create tour failed: ${err.response.data}`)
 		}
@@ -155,7 +155,7 @@ export const TourEditor: React.FC = () => {
 
 		<button type="button" onClick={addNode}>Add Room</button>
 		<button type="submit">Submit</button>
-		<Link to={`/company/${id}`}>Cancel</Link>
+		<Link to={`/company/${companyId}`}>Cancel</Link>
 		</form>
 		</div>
 	)

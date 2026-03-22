@@ -2,12 +2,13 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -18,18 +19,12 @@ func (s *Server) handleCreateCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.CreateCompanyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+	companyReq, err := parseCompanyReq(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	if req.Name == "" {
-		http.Error(w, "Company name is required", http.StatusBadRequest)
-		return
-	}
-
-	company, err := s.storage.CreateCompany(r.Context(), userID, req.Name)
+	company, err := s.storage.CreateCompany(r.Context(), userID, companyReq.Name)
 	if err != nil {
 		http.Error(w, "Failed to create company", http.StatusInternalServerError)
 		return
@@ -49,20 +44,21 @@ func (s *Server) handleCreateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUpdateCompany(w http.ResponseWriter, r *http.Request) {
-	var req dto.UpdateCompanyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	if req.Name == "" {
-		http.Error(w, "Company name cannot be empty", http.StatusBadRequest)
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	company, err := s.storage.UpdateCompany(r.Context(), req.ID, req.Name)
+	companyReq, err := parseCompanyReq(r)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			http.Error(w, "Company not found or you don't have permission", http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	company, err := s.storage.UpdateCompany(r.Context(), reqData.userID, reqData.companyID, companyReq.Name)
+	if err != nil {
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
 			http.Error(w, "Failed to update company", http.StatusInternalServerError)
 		}
@@ -82,17 +78,17 @@ func (s *Server) handleUpdateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeleteCompany(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
 	if err != nil {
-		http.Error(w, "Invalid company ID", http.StatusBadRequest)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	if err := s.storage.DeleteCompany(r.Context(), id); err != nil {
-		if err == pgx.ErrNoRows {
-			http.Error(w, "Company not found or you don't have permission", http.StatusNotFound)
+	if err := s.storage.DeleteCompany(r.Context(), reqData.userID, reqData.companyID); err != nil {
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
-			http.Error(w, "Failed to delete company", http.StatusInternalServerError)
+			http.Error(w, "Failed to update company", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -101,18 +97,18 @@ func (s *Server) handleDeleteCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetCompanyByID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
 	if err != nil {
-		http.Error(w, "Invalid Company ID", http.StatusBadRequest)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	company, err := s.storage.GetCompanyByID(r.Context(), id)
+	company, err := s.storage.GetCompanyByID(r.Context(), reqData.userID, reqData.companyID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			http.Error(w, "Company not found", http.StatusNotFound)
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Failed to update company", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -149,11 +145,13 @@ func (s *Server) handleGetCompaniesOfUser(w http.ResponseWriter, r *http.Request
 	resp := make([]dto.CompanyWithUserRoleResponse, 0, len(companies))
 	for _, company := range companies {
 		resp = append(resp, dto.CompanyWithUserRoleResponse{
-			ID:        company.ID.String(),
-			Name:      company.Name,
-			CreatedAt: company.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
-			UserRole:  company.UserRole,
+			CompanyResponse: dto.CompanyResponse{
+				ID:        company.ID.String(),
+				Name:      company.Name,
+				CreatedAt: company.CreatedAt.Format(time.RFC3339),
+				UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
+			},
+			UserRole: company.UserRole,
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")

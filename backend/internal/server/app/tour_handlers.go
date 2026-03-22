@@ -3,10 +3,12 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
 	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
@@ -14,33 +16,37 @@ import (
 )
 
 func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
-	userID, err := common.GetUserIDFromContext(r.Context())
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := r.ParseMultipartForm(50 << 20); err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
-	req, err := parseTourReqFromMultipart[dto.CreateTourRequest](r)
+	tourReq, err := parseTourReqFromMultipart(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, req.CompanyID.String())
+	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, reqData.companyID.String())
 	if err != nil {
 		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
 		return
 	}
-	for i, node := range req.Data.Nodes {
+	for i, node := range tourReq.Data.Nodes {
 		node.Panorama = uploaded[i]
 	}
 
-	tour, err := s.storage.CreateTour(r.Context(), req.CompanyID, userID, req.Name, *req.Data)
+	tour, err := s.storage.CreateTour(r.Context(), reqData.companyID, reqData.userID, tourReq.Name, *tourReq.Data)
 	if err != nil {
-		http.Error(w, "Failed to create tour", http.StatusInternalServerError)
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+		} else {
+			http.Error(w, "Failed to create tour", http.StatusInternalServerError)
+		}
 		return
 	}
 	updateImagePaths(s.cfg.AppAddress, &tour.Data)
@@ -63,9 +69,9 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
-	userID, err := common.GetUserIDFromContext(r.Context())
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}, "tour": {}})
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -73,13 +79,13 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
-	req, err := parseTourReqFromMultipart[dto.UpdateTourRequest](r)
+	tourReq, err := parseTourReqFromMultipart(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	existingTour, err := s.storage.GetTourByID(r.Context(), req.ID)
+	existingTour, err := s.storage.GetTourByID(r.Context(), reqData.tourID)
 	if err != nil {
 		http.Error(w, "tour with provided not found", http.StatusNotFound)
 		return
@@ -90,14 +96,14 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
 		return
 	}
-	for i, node := range req.Data.Nodes {
+	for i, node := range tourReq.Data.Nodes {
 		node.Panorama = uploaded[i]
 	}
 
-	tour, err := s.storage.UpdateTour(r.Context(), req.ID, userID, req.Name, *req.Data)
+	tour, err := s.storage.UpdateTour(r.Context(), reqData.companyID, reqData.userID, reqData.tourID, tourReq.Name, *tourReq.Data)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			http.Error(w, "Tour not found or you don't have permission", http.StatusNotFound)
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
 			http.Error(w, "Failed to update tour", http.StatusInternalServerError)
 		}
@@ -131,15 +137,15 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}, "tour": {}})
 	if err != nil {
-		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := s.storage.DeleteTour(r.Context(), id); err != nil {
-		if err == pgx.ErrNoRows {
-			http.Error(w, "Tour not found or you don't have permission", http.StatusNotFound)
+	if err := s.storage.DeleteTour(r.Context(), reqData.userID, reqData.companyID, reqData.tourID); err != nil {
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
 			http.Error(w, "Failed to delete tour", http.StatusInternalServerError)
 		}
@@ -150,7 +156,7 @@ func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetTourByID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	id, err := uuid.Parse(r.PathValue("tourId"))
 	if err != nil {
 		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
 		return
@@ -216,15 +222,19 @@ func (s *Server) handleGetUserTours(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetToursByCompanyID(w http.ResponseWriter, r *http.Request) {
-	companyID, err := uuid.Parse(r.PathValue("companyId"))
+	reqData, err := getRequestData(r, map[string]struct{}{"user": {}, "company": {}})
 	if err != nil {
-		http.Error(w, "Invalid tour ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	tours, err := s.storage.GetToursByCompanyID(r.Context(), companyID)
+	tours, err := s.storage.GetToursByCompanyID(r.Context(), reqData.userID, reqData.companyID)
 	if err != nil {
-		http.Error(w, "Failed to retrieve tours", http.StatusInternalServerError)
+		if errors.Is(err, domain.ErrInsufficientPermissions) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+		} else {
+			http.Error(w, "Failed to retrieve tours", http.StatusInternalServerError)
+		}
 		return
 	}
 

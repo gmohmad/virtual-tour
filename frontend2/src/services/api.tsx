@@ -50,19 +50,19 @@ export const getUserTours = () => {
 };
 
 export const getCompanyTours = (companyId: string) => {
-	return api.get(`/get-company-tours/${companyId}`);
+	return api.get(`/company/${companyId}/get-tours`);
 };
 
-export const createTour = (formData: FormData) => {
-  return api.post("/create-tour", formData);
+export const createTour = (companyId: string, formData: FormData) => {
+  return api.post(`/company/${companyId}/create-tour`, formData);
 };
 
-export const updateTour = (formData: FormData) => {
-  return api.put(`/update-tour`, formData);
+export const updateTour = (companyId: string, tourId: string, formData: FormData) => {
+  return api.put(`/company/${companyId}/update-tour/${tourId}`, formData);
 };
 
-export const deleteTour = (id: string) => {
-	return api.delete(`/delete-tour/${id}`);
+export const deleteTour = (companyId: string, tourId: string) => {
+	return api.delete(`/company/${companyId}/delete-tour/${tourId}`);
 };
 
 export const getImage = (url: string) => {

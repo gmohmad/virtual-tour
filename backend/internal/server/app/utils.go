@@ -9,24 +9,71 @@ import (
 
 	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/gmohmad/diploma/internal/models/dto"
+	"github.com/gmohmad/diploma/internal/server/common"
+	"github.com/google/uuid"
 )
 
-func parseTourReqFromMultipart[T dto.TourRequest](r *http.Request) (*T, error) {
+type requestData struct {
+	userID    uuid.UUID
+	companyID uuid.UUID
+	tourID    uuid.UUID
+}
+
+func parseTourReqFromMultipart(r *http.Request) (*dto.TourRequest, error) {
 	data := r.FormValue("data")
 	if data == "" {
 		return nil, fmt.Errorf("missing data part")
 	}
-	var req T
+	var req dto.TourRequest
 	if err := json.NewDecoder(strings.NewReader(data)).Decode(&req); err != nil {
 		return nil, fmt.Errorf("failed parsing json data: %w", err)
 	}
-	if req.GetName() == "" {
+	if req.Name == "" {
 		return nil, fmt.Errorf("tour name is empty")
 	}
-	if len(req.GetData().Nodes) != len(r.MultipartForm.File) {
+	if len(req.Data.Nodes) != len(r.MultipartForm.File) {
 		return nil, fmt.Errorf("amount of provided file not equal to amount of nodes")
 	}
 	return &req, nil
+}
+
+func parseCompanyReq(r *http.Request) (*dto.CompanyRequest, error) {
+	var req dto.CompanyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, fmt.Errorf("Invalid requst body")
+	}
+	if req.Name == "" {
+		return nil, fmt.Errorf("Company name cannot be empty")
+	}
+	return &req, nil
+}
+
+func getRequestData(r *http.Request, fields map[string]struct{}) (*requestData, error) {
+	var rd requestData
+	if _, ok := fields["user"]; ok {
+		userID, err := common.GetUserIDFromContext(r.Context())
+		if err != nil {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+		rd.userID = userID
+	}
+	if _, ok := fields["company"]; ok {
+		companyID, err := uuid.Parse(r.PathValue("companyId"))
+		if err != nil {
+			return nil, fmt.Errorf("Invalid companyID")
+		}
+		rd.companyID = companyID
+
+	}
+	if _, ok := fields["tour"]; ok {
+		tourID, err := uuid.Parse(r.PathValue("tourId"))
+		if err != nil {
+			return nil, fmt.Errorf("Invalid tourID")
+		}
+		rd.tourID = tourID
+
+	}
+	return &rd, nil
 }
 
 func updateImagePaths(address string, tourData *domain.TourData) {

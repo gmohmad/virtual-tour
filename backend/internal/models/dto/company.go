@@ -1,14 +1,7 @@
 package dto
 
-import "github.com/google/uuid"
-
-type CreateCompanyRequest struct {
+type CompanyRequest struct {
 	Name string `json:"name"`
-}
-
-type UpdateCompanyRequest struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
 }
 
 type CompanyResponse struct {

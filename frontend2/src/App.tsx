@@ -15,12 +15,12 @@ function AppRoutes() {
 			<Route path="/register" element={<Register />} />
 
 			<Route path="/company/new" element={<CompanyEditor />} />
-			<Route path="/company/edit/:id" element={<CompanyEditor />} />
+			<Route path="/company/edit/:companyId" element={<CompanyEditor />} />
 
 			<Route path="/companies/my" element={<CompaniesList />} />
-			<Route path="/company/:id" element={<CompanyViewer />} />
-			<Route path="/company/:id/tours/new" element={<TourEditor />} />
-			<Route path="/company/:id/tours/edit/:tourId" element={<TourEditor />} />
+			<Route path="/company/:companyId" element={<CompanyViewer />} />
+			<Route path="/company/:companyId/tours/new" element={<TourEditor />} />
+			<Route path="/company/:companyId/tours/edit/:tourId" element={<TourEditor />} />
 		</Routes>
 	);
 }
