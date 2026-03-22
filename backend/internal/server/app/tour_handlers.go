@@ -87,7 +87,7 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 
 	existingTour, err := s.storage.GetTourByID(r.Context(), reqData.tourID)
 	if err != nil {
-		http.Error(w, "tour with provided not found", http.StatusNotFound)
+		http.Error(w, "tour with provided id not found", http.StatusNotFound)
 		return
 	}
 
@@ -143,12 +143,26 @@ func (s *Server) handleDeleteTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existingTour, err := s.storage.GetTourByID(r.Context(), reqData.tourID)
+	if err != nil {
+		http.Error(w, "tour with provided id not found", http.StatusNotFound)
+		return
+	}
 	if err := s.storage.DeleteTour(r.Context(), reqData.userID, reqData.companyID, reqData.tourID); err != nil {
 		if errors.Is(err, domain.ErrInsufficientPermissions) {
 			http.Error(w, err.Error(), http.StatusForbidden)
 		} else {
 			http.Error(w, "Failed to delete tour", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	keysToClean := make([]string, 0, len(existingTour.Data.Nodes))
+	for _, node := range existingTour.Data.Nodes {
+		keysToClean = append(keysToClean, node.Panorama)
+	}
+	if err := s.s3.DeleteFiles(s.cfg.S3.Bucket, keysToClean); err != nil {
+		http.Error(w, "failed clearing old files", http.StatusInternalServerError)
 		return
 	}
 
