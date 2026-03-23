@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getTourByID } from "../services/appApi";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,7 +16,7 @@ export const TourViewer: React.FC = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 
-	const [clientId] = useState(() => getClientId(user?.id));
+	const clientId = useMemo(() => getClientId(user?.id), [user?.id]);
 	const params = new URLSearchParams({ clientId: clientId }).toString();
 	const wsUrl = `${import.meta.env.VITE_LIVETOUR_API_URL.replace("http", "ws")}/connect/${sessionId}?${params}`;
 
@@ -88,7 +88,7 @@ const getClientId = (userId?: string): string => {
 	let clientId = localStorage.getItem("clientId");
 	if (!clientId) {
 		clientId = crypto.randomUUID();
-		localStorage.setItem("deviceId", clientId);
+		localStorage.setItem("clientId", clientId);
 	}
 	return clientId;
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useNavigate } from "react-router-dom";
+import Drawer from 'react-modern-drawer';
 import { ReactPhotoSphereViewer } from "react-photo-sphere-viewer";
 import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
 import type { Tour } from "../types/tour";
@@ -19,6 +20,7 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
 	const [isReady, setIsReady] = useState(false);
+	const [openPanel, setOpenPanel] = useState(false);
 
 	const navigate = useNavigate();
 	const { lastMessage } = useWebSocket(wsUrl);
@@ -34,12 +36,12 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 				break;
 			case "session_ended":
 				console.log("Session ended by owner");
-				navigate("/companies/my")
+				navigate("/login")
 				break;
 				// onSessionEnded?.();
 			case "error":
 				console.error("Server error:", msg.error);
-				navigate("/companies/my")
+				navigate("/login")
 				break;
 				// onError?.(msg.error);
 		}
@@ -80,6 +82,30 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 			touchmoveTwoFingers={false}
 			keyboard={false}
 			/>
+
+		{!openPanel && (
+			<button
+			onClick={() => setOpenPanel(true)}
+			style={{position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}
+			>
+			Open Panel
+			</button>
+		)}
+
+		<Drawer
+		open={openPanel}
+		onClose={() => setOpenPanel(false)}
+		direction="right"
+		overlayOpacity={0.5}
+		overlayColor="rgba(0,0,0,0.5)"
+		size={200}
+		className="panel"
+		lockBackgroundScroll
+		>
+		<button onClick={() => setOpenPanel(false)}>Close</button>
+		<button onClick={() => navigate("/login")}>Leave</button>
+		</Drawer>
+
 		</div>
 	)
 }

@@ -15,3 +15,9 @@ body {
 	font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 	transition: background-color 0.1s, color 0.1s;
 }
+
+.panel {
+	background: 'rgba(255, 255, 255, 0.8)';
+	backdropFilter: 'blur(8px)';
+	padding: '20px';
+}
