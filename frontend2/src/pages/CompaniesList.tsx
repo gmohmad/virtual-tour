@@ -16,7 +16,7 @@ export const CompaniesList: React.FC = () => {
 	}
 
 	const handleDelete = async (id: string) => {
-		if (confirm('Are you sure?')) {
+		if (confirm("Are you sure?")) {
 			await deleteCompany(id);
 			loadCompanies();
 		}
@@ -40,12 +40,11 @@ export const CompaniesList: React.FC = () => {
 				<div>
 				<button onClick={() => handleDelete(company.id)}>Delete</button>
 				<button onClick={() => navigate(`/company/edit/${company.id}`)}>Edit</button>
-				<button onClick={() => navigate(`/company/${company.id}`)}>Veew</button>
+				<button onClick={() => navigate(`/company/${company.id}`)}>View</button>
 				</div>
 				:
 				<button onClick={() => console.log("Leave")}>Leave</button>
 			}
-			<Link to={`/company/${company.id}`}>View</Link>
 			</li>
 		))}
 		</ul>

@@ -11,9 +11,11 @@ import (
 )
 
 type Session struct {
-	id         uuid.UUID
-	ownerID    uuid.UUID
-	clients    *maputil.AsyncMap[uuid.UUID, *Client]
+	id        uuid.UUID
+	ownerID   uuid.UUID
+	clients   *maputil.AsyncMap[uuid.UUID, *Client]
+	createdAt time.Time
+
 	incoming   chan clientMessage
 	unregister chan *Client
 	shutdown   chan struct{}
@@ -24,6 +26,7 @@ func NewSession(logger *zap.Logger, ownerID uuid.UUID) *Session {
 	s := &Session{
 		id:         uuid.New(),
 		ownerID:    ownerID,
+		createdAt:  time.Now(),
 		incoming:   make(chan clientMessage, 100),
 		unregister: make(chan *Client, 100),
 		shutdown:   make(chan struct{}),
@@ -87,7 +90,7 @@ func (s *Session) AddClient(client *Client) error {
 }
 
 func (s *Session) ShutDown() {
-	s.shutdown <- struct{}{}
+	// s.shutdown <- struct{}{}
 }
 
 func (s *Session) Close() {

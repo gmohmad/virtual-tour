@@ -37,11 +37,14 @@ func (s *Server) handleEndSession(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
 	if err != nil {
-		common.WriteResponse(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	s.hub.EndSession(sessionID, userID)
+	if err := s.hub.EndSession(userID, sessionID); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
 	common.WriteResponse(w, "session ended", http.StatusOK)
 }
 

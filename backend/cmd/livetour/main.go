@@ -24,7 +24,12 @@ func main() {
 		logger.Fatal("failed loading config", zap.Error(err))
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	hub := livetour.NewHub(cfg, logger)
+	hub.Run(ctx)
+
 	server := livetour_server.New(cfg, logger, hub)
 	go func() {
 		if err := server.ListenAndServe(context.Background()); err != nil {

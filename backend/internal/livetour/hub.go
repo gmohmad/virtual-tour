@@ -1,7 +1,9 @@
 package livetour
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/pkg/maputil"
@@ -9,10 +11,16 @@ import (
 	"go.uber.org/zap"
 )
 
+const sessionExpiry = time.Minute * 5
+
 type Hub struct {
 	cfg      *config.Config
 	logger   *zap.Logger
 	sessions *maputil.AsyncMap[uuid.UUID, *Session]
+}
+
+func (h *Hub) Run(ctx context.Context) {
+	go h.cleanExpiredSessions(ctx)
 }
 
 func NewHub(cfg *config.Config, logger *zap.Logger) *Hub {
@@ -66,4 +74,25 @@ func (h *Hub) GetSession(sessionID uuid.UUID) (*Session, error) {
 		return nil, fmt.Errorf("a session with the provider id doesnt exists")
 	}
 	return session, nil
+}
+
+func (h *Hub) cleanExpiredSessions(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Minute)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			toDelete := make([]uuid.UUID, 0)
+			h.sessions.Range(func(key uuid.UUID, sess *Session) {
+				if time.Since(sess.createdAt) >= sessionExpiry && sess.GetClientsAmount() == 0 {
+					toDelete = append(toDelete, sess.id)
+				}
+			})
+			for _, sessionID := range toDelete {
+				h.sessions.Del(sessionID)
+				h.logger.Info("session ended due to expiry", zap.Any("session_id", sessionID))
+			}
+		}
+	}
 }

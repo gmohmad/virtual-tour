@@ -12,6 +12,6 @@ body {
 	margin: 0;
 	background-color: var(--bg-color);
 	color: var(--text-color);
-	font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+	font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 	transition: background-color 0.1s, color 0.1s;
 }

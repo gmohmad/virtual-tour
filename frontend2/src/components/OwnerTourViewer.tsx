@@ -18,32 +18,32 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
 	const intervalRef = useRef<number>(0);
-	const latestState = useRef({ nodeId: '', yaw: 0, pitch: 0, zoom: 0 });
+	const latestState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
 
 	const { sendMessage } = useWebSocket(wsUrl);
 
 	const startMessageSend = (interval: number) => {
 		intervalRef.current = window.setInterval(() => {
 			const { nodeId, yaw, pitch, zoom } = latestState.current;
-			if (nodeId) sendMessage({type: 'state', data: { nodeId, yaw, pitch, zoomLevel: zoom }});
+			if (nodeId) sendMessage({type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom }});
 		}, interval);
 	}
 
 	const setUpListeners = () => {
-		virtualTourRef.current.addEventListener('node-changed', ({ node }: any) => {
+		virtualTourRef.current.addEventListener("node-changed", ({ node }: any) => {
 			latestState.current.nodeId = node.id;
 		});
-		viewerRef.current.addEventListener('position-updated', ({ position }: any) => {
+		viewerRef.current.addEventListener("position-updated", ({ position }: any) => {
 			latestState.current.yaw = position.yaw;
 			latestState.current.pitch = position.pitch;
 		});
-		viewerRef.current.addEventListener('zoom-updated', ({ zoomLevel }: any) => {
+		viewerRef.current.addEventListener("zoom-updated", ({ zoomLevel }: any) => {
 			latestState.current.zoom = zoomLevel;
 		});
 	}
 
 	const handleReady = (instance: any) => {
-		console.log('Viewer ready');
+		console.log("Viewer ready");
 		viewerRef.current = instance;
 		const virtualTour = instance.getPlugin(VirtualTourPlugin);
 		virtualTourRef.current = virtualTour;

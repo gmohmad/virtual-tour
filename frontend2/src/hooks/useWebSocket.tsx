@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useWebSocket = (url: string) => {
 	const [lastMessage, setLastMessage] = useState<string | null>(null);

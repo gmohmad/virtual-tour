@@ -66,7 +66,7 @@ export const TourEditor: React.FC = () => {
 
 	const selectFile = (idx: number, nodeId: string, file: File) => {
 		setNodeFiles(prev => ({ ...prev, [nodeId]: file }));
-		updateNode(idx, 'panorama', URL.createObjectURL(file));
+		updateNode(idx, "panorama", URL.createObjectURL(file));
 	}
 
 	const removeFile = (idx: number, nodeId: string) => {
@@ -79,7 +79,7 @@ export const TourEditor: React.FC = () => {
 	}
 
 	const getImageUrl = (key: string) => {
-		if (key.startsWith('blob:')) return key;
+		if (key.startsWith("blob:")) return key;
 		return `${import.meta.env.VITE_APP_API_URL}/${key}`;
 	};
 

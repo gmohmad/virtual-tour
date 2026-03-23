@@ -1,13 +1,13 @@
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { Login } from './pages/Login'
-import { Register } from './pages/Register';
-import { CompanyEditor } from './pages/CompanyEditor';
-import { TourEditor } from './pages/TourEditor';
-import { CompaniesList } from './pages/CompaniesList';
-import { CompanyViewer } from './pages/CompanyViewer';
-import { TourViewer } from './pages/TourViewer';
+import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext"
+import { ThemeProvider } from "./contexts/ThemeContext"
+import { Login } from "./pages/Login"
+import { Register } from "./pages/Register";
+import { CompanyEditor } from "./pages/CompanyEditor";
+import { TourEditor } from "./pages/TourEditor";
+import { CompaniesList } from "./pages/CompaniesList";
+import { CompanyViewer } from "./pages/CompanyViewer";
+import { TourViewer } from "./pages/TourViewer";
 
 function AppRoutes() {
 	return (

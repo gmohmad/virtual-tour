@@ -23,10 +23,10 @@ export const CompanyViewer: React.FC = () => {
 		getCompanyTours(companyId).then(resp => {
 			setTours(resp.data);
 		});
-	}, [companyId, tours])
+	}, [companyId])
 
 	const handleDeleteTour = async (tourId: string) => {
-		if (confirm('Are you sure?') && companyId) {
+		if (confirm("Are you sure?") && companyId) {
 			await deleteTour(companyId, tourId);
 		}
 	}
