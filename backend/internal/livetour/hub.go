@@ -40,7 +40,7 @@ func (h *Hub) ConnectToSession(sessionID uuid.UUID, client *Client) error {
 		return err
 	}
 	if client.id == session.ownerID {
-		go session.Run(h.sessions)
+		session.ownerJoinedAt = time.Now()
 	}
 	h.logger.Info("clients", zap.Any("", session.GetClientsAmount()))
 	return nil
@@ -48,6 +48,7 @@ func (h *Hub) ConnectToSession(sessionID uuid.UUID, client *Client) error {
 
 func (h *Hub) CreateSession(ownerID uuid.UUID) *Session {
 	session := NewSession(h.logger, ownerID)
+	go session.Run(h.sessions)
 	h.sessions.Set(session.id, session)
 	h.logger.Info("session created", zap.Any("session_id", session.id), zap.Any("owner_id", ownerID))
 	return session
@@ -64,7 +65,6 @@ func (h *Hub) EndSession(userID, sessionID uuid.UUID) error {
 
 	h.sessions.Del(sessionID)
 	session.ShutDown()
-	h.logger.Info("session ended", zap.Any("id", session.id))
 	return nil
 }
 
@@ -83,15 +83,15 @@ func (h *Hub) cleanExpiredSessions(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			toDelete := make([]uuid.UUID, 0)
+			toDelete := make([]*Session, 0)
 			h.sessions.Range(func(key uuid.UUID, sess *Session) {
-				if time.Since(sess.createdAt) >= sessionExpiry && sess.GetClientsAmount() == 0 {
-					toDelete = append(toDelete, sess.id)
+				if _, ownerConnected := sess.clients.Get(sess.ownerID); time.Since(sess.ownerJoinedAt) >= sessionExpiry && !ownerConnected {
+					toDelete = append(toDelete, sess)
 				}
 			})
-			for _, sessionID := range toDelete {
-				h.sessions.Del(sessionID)
-				h.logger.Info("session ended due to expiry", zap.Any("session_id", sessionID))
+			for _, session := range toDelete {
+				session.ShutDown()
+				h.sessions.Del(session.id)
 			}
 		}
 	}

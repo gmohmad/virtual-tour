@@ -11,10 +11,10 @@ import (
 )
 
 type Session struct {
-	id        uuid.UUID
-	ownerID   uuid.UUID
-	clients   *maputil.AsyncMap[uuid.UUID, *Client]
-	createdAt time.Time
+	id            uuid.UUID
+	ownerID       uuid.UUID
+	clients       *maputil.AsyncMap[uuid.UUID, *Client]
+	ownerJoinedAt time.Time
 
 	incoming   chan clientMessage
 	unregister chan *Client
@@ -24,14 +24,14 @@ type Session struct {
 
 func NewSession(logger *zap.Logger, ownerID uuid.UUID) *Session {
 	s := &Session{
-		id:         uuid.New(),
-		ownerID:    ownerID,
-		createdAt:  time.Now(),
-		incoming:   make(chan clientMessage, 100),
-		unregister: make(chan *Client, 100),
-		shutdown:   make(chan struct{}),
-		clients:    maputil.NewAsyncMap[uuid.UUID, *Client](),
-		logger:     logger,
+		id:            uuid.New(),
+		ownerID:       ownerID,
+		ownerJoinedAt: time.Now(),
+		incoming:      make(chan clientMessage, 100),
+		unregister:    make(chan *Client, 100),
+		shutdown:      make(chan struct{}),
+		clients:       maputil.NewAsyncMap[uuid.UUID, *Client](),
+		logger:        logger,
 	}
 	return s
 }
@@ -54,14 +54,15 @@ func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 
 	for {
 		select {
+		case <-s.shutdown:
+			s.Close()
+			s.logger.Info("session ended", zap.Any("session_id", s.id))
+			return
 		case client := <-s.unregister:
 			client.close()
 			s.clients.Del(client.id)
 			if client.id == s.ownerID {
-				s.Close()
-				hubSessions.Del(s.id)
-				s.logger.Info("owner disconnected, ending session", zap.Any("owner_id", s.ownerID), zap.Any("session_id", s.id))
-				return
+				s.logger.Info("owner disconnected", zap.Any("owner_id", s.ownerID))
 			} else {
 				s.logger.Info("client disconnected", zap.Any("id", client.id))
 			}
@@ -90,7 +91,7 @@ func (s *Session) AddClient(client *Client) error {
 }
 
 func (s *Session) ShutDown() {
-	// s.shutdown <- struct{}{}
+	s.shutdown <- struct{}{}
 }
 
 func (s *Session) Close() {
