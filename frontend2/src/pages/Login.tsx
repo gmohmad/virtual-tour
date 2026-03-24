@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 export const Login: React.FC = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const { login } = useAuth();
+	const { user, login } = useAuth();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
@@ -21,7 +21,9 @@ export const Login: React.FC = () => {
 	return (
 		<div> 
 			<h1>LOGIN</h1>
-			<form onSubmit={handleSubmit}>
+			{!user?.id ?
+				<div>
+				<form onSubmit={handleSubmit}>
 				<label>Email</label>
 				<input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
 
@@ -29,8 +31,12 @@ export const Login: React.FC = () => {
 				<input type="password" minLength={8} maxLength={16} value={password} onChange={e => setPassword(e.target.value)}required />
 
 				<button type="submit">Login</button>
-			</form>
-			<Link to="/register">Register</Link>
+				</form>
+				<Link to="/register">Register</Link>
+				</div>
+				:
+				<h3>You're already logged in. <Link to={"/Logout"}>Logout</Link></h3>
+			}
 		</div>
 	)
 }

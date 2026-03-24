@@ -8,12 +8,15 @@ import { TourEditor } from "./pages/TourEditor";
 import { CompaniesList } from "./pages/CompaniesList";
 import { CompanyViewer } from "./pages/CompanyViewer";
 import { TourViewer } from "./pages/TourViewer";
+import { Logout } from "./pages/Logout";
+import { Header } from "./components/Header";
 
 function AppRoutes() {
 	return (
 		<Routes>
 			<Route path="/login" element={<Login />} />
 			<Route path="/register" element={<Register />} />
+			<Route path="/logout" element={<Logout />} />
 
 			<Route path="/company/new" element={<CompanyEditor />} />
 			<Route path="/company/edit/:companyId" element={<CompanyEditor />} />
@@ -33,6 +36,7 @@ function App() {
 		<BrowserRouter>
 			<ThemeProvider>
 				<AuthProvider>
+					<Header />
 					<AppRoutes />
 				</AuthProvider>
 			</ThemeProvider>
