@@ -7,6 +7,7 @@ import type { Tour } from "../types/tour";
 import type { Session } from "../types/session";
 import { OwnerTourViewer } from "../components/OwnerTourViewer";
 import { ClientTourViewer } from "../components/ClientTourViewer";
+import { v4 as uuidv4 } from 'uuid';
 
 export const TourViewer: React.FC = () => {
 	const [session, setSession] = useState<Session>();
@@ -87,7 +88,7 @@ const getClientId = (userId?: string): string => {
 	if (userId) return userId;
 	let clientId = localStorage.getItem("clientId");
 	if (!clientId) {
-		clientId = crypto.randomUUID();
+		clientId = uuidv4()
 		localStorage.setItem("clientId", clientId);
 	}
 	return clientId;

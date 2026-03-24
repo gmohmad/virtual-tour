@@ -16,7 +16,8 @@
     "react-dom": "^19.2.4",
     "react-modern-drawer": "^1.4.0",
     "react-photo-sphere-viewer": "^6.2.3",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

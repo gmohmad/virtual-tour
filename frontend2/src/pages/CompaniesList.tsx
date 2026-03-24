@@ -2,7 +2,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { deleteCompany, getCompaniesOfUser } from "../services/appApi";
 import type { Company } from "../types/company";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export const CompaniesList: React.FC = () => {
 	const [companies, setCompanies] = useState<Company[]>([]);
