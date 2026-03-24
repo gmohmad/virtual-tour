@@ -21,17 +21,24 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 }) => {
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
-	const intervalRef = useRef<number>(0);
+	const intervalRef = useRef<number>(3);
 	const latestState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
 
 	const navigate = useNavigate();
+	const { sendMessage, ws } = useWebSocket(wsUrl);
 	const [openPanel, setOpenPanel] = useState(false);
-	const { sendMessage } = useWebSocket(wsUrl);
+	const [isStreaming, setIsStreaming] = useState(true);
+	const [connStatus, setConnStatus] = useState(3);
+	const isStreamingRef = useRef(isStreaming);
+
+	useEffect(() => {isStreamingRef.current = isStreaming}, [isStreaming]);
+
+	useEffect(() => {if (ws?.readyState) setConnStatus(ws.readyState)}, [ws?.readyState]);
 
 	const startMessageSend = (interval: number) => {
 		intervalRef.current = window.setInterval(() => {
 			const { nodeId, yaw, pitch, zoom } = latestState.current;
-			if (nodeId) sendMessage({type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom }});
+			if (nodeId && isStreamingRef.current) sendMessage({type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom }});
 		}, interval);
 	}
 
@@ -62,7 +69,11 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const handleEndSession = () => {
 		endSession(session.id).catch(console.error);
 		navigate("/companies/my")
-	}
+	};
+
+	const handleIsStreaming = () => {
+		setIsStreaming(!isStreamingRef.current)
+	};
 
 	useEffect(() => {
 		return () => {
@@ -84,6 +95,8 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 			<button onClick={handleEndSession}>End Session</button>
 		</div>
 
+		<h2 style={{position: 'fixed', top: '20px', right: '100px', zIndex: 1000 }}>{connStatus == 1 ? "Connected" : connStatus == 0 ? "Disconnected" : connStatus == 3 ? "Connecting..." : `Unknown status ${connStatus}`}</h2>
+
 		{!openPanel && (
 			<button
 			onClick={() => setOpenPanel(true)}
@@ -104,6 +117,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 		>
 		<button onClick={() => setOpenPanel(false)}>Close</button>
 		<button onClick={handleEndSession}>End Session</button>
+		<button onClick={handleIsStreaming}>Pause Streaming</button>
 		<button onClick={() => navigator.clipboard.writeText(window.location.href)}>Copy Share Link</button>
 		</Drawer>
 
