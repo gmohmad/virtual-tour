@@ -93,3 +93,16 @@ func (s *Storage) GetCompaniesOfUser(ctx context.Context, userID uuid.UUID) ([]*
 	defer rows.Close()
 	return pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[domain.CompanyWithUserRole])
 }
+
+func (s *Storage) AddUsersToCompany(ctx context.Context, userID, companyID uuid.UUID, userIDs []uuid.UUID) error {
+	if !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
+		return domain.ErrInsufficientPermissions
+	}
+	query := `
+        INSERT INTO company_roles (user_id, company_id, role)
+        SELECT unnest($1::uuid[]), $2, 'member'
+        ON CONFLICT (user_id, company_id) DO NOTHING
+    `
+	_, err := s.client.Exec(ctx, query, userIDs, companyID)
+	return err
+}

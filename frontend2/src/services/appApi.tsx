@@ -19,6 +19,10 @@ export const register = (name: string, email: string, password: string) => {
 	return api.post("/register", { name, email, password });
 };
 
+export const searchUsers = (email: string) => {
+	return api.get(`/search-users?email=${email}`);
+}
+
 // company
 export const getCompanyByID = (id: string) => {
 	return api.get(`/get-company/${id}`);
@@ -33,12 +37,16 @@ export const createCompany = (name: string) => {
 };
 
 export const updateCompany = (id: string, name: string) => {
-	return api.put("/update-company", { id, name });
+	return api.put(`/update-company/${id}`, { name });
 };
 
 export const deleteCompany = (id: string) => {
 	return api.delete(`/delete-company/${id}`);
 };
+
+export const addMembersToCompany = (id: string, user_ids: string[]) => {
+	return api.post(`/add-members-to-company/${id}`, { user_ids })
+}
 
 // tour
 export const getTourByID = (id: string) => {

@@ -47,6 +47,7 @@ func (s *Server) setupHandler() {
 
 	r.HandleFunc("POST /login", s.handleLogin)
 	r.HandleFunc("POST /register", s.handleRegister)
+	r.HandleFunc("GET /search-users", common.AuthMiddleware(s.handleSearchUsers))
 
 	r.HandleFunc("GET /images/{path...}", s.serveImage)
 
@@ -55,6 +56,7 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("DELETE /delete-company/{companyId}", common.AuthMiddleware(s.handleDeleteCompany))
 	r.HandleFunc("GET /get-company/{companyId}", common.AuthMiddleware(s.handleGetCompanyByID))
 	r.HandleFunc("GET /get-user-companies", common.AuthMiddleware(s.handleGetCompaniesOfUser))
+	r.HandleFunc("POST /add-members-to-company/{companyId}", common.AuthMiddleware(s.handleAddMemberToCompany))
 
 	r.HandleFunc("POST /company/{companyId}/create-tour", common.AuthMiddleware(s.handleCreateTour))
 	r.HandleFunc("PUT /company/{companyId}/update-tour/{tourId}", common.AuthMiddleware(s.handleUpdateTour))

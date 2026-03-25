@@ -7,6 +7,7 @@ const (
 	TourIDkey    = "tourId"
 	SessionIDKey = "sessionId"
 	ClientIDKey  = "clientId"
+	EmailKey     = "email"
 
 	OwnerRole  = "owner"
 	AdminRole  = "admin"

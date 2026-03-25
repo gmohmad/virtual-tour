@@ -52,14 +52,28 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (*domain.Use
 	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[domain.User])
 }
 
-func (s *Storage) GetUsersByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*domain.UserWithRole, error) {
+func (s *Storage) GetUsersByEmailSearch(ctx context.Context, userID uuid.UUID, email string) ([]*domain.User, error) {
+	query := `
+        SELECT id, name, email, password_hash, created_at, updated_at
+        FROM users
+        WHERE id != $1 AND email LIKE '%' || $2 || '%'
+    `
+	rows, err := s.client.Query(ctx, query, userID, email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[domain.User])
+}
+
+func (s *Storage) GetUsersByCompanyID(ctx context.Context, userID, companyID uuid.UUID) ([]*domain.UserWithRole, error) {
 	query := `
         SELECT u.id, u.name, u.email, u.created_at, u.updated_at, cr.role
         FROM users u
         JOIN company_roles cr ON u.id = cr.user_id
-        WHERE cr.company_id = $1
+        WHERE cr.company_id = $2 AND cr.user_id != $1
     `
-	rows, err := s.client.Query(ctx, query, companyID)
+	rows, err := s.client.Query(ctx, query, userID, companyID)
 	if err != nil {
 		return nil, err
 	}

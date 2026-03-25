@@ -160,3 +160,33 @@ func (s *Server) handleGetCompaniesOfUser(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Failed writing response", http.StatusInternalServerError)
 	}
 }
+
+func (s *Server) handleAddMemberToCompany(w http.ResponseWriter, r *http.Request) {
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var req dto.UserIDsBatch
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Failed unmarshalling body", http.StatusBadRequest)
+		return
+	}
+	if len(req.UserIDs) == 0 {
+		http.Error(w, "Empty user ids list", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.storage.AddUsersToCompany(r.Context(), reqData.userID, reqData.companyID, req.UserIDs); err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Company not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	common.WriteResponse(w, "success", http.StatusOK)
+}
