@@ -8,17 +8,14 @@ export const CompaniesList: React.FC = () => {
 	const [companies, setCompanies] = useState<Company[]>([]);
 	const navigate = useNavigate();
 
-	useEffect(() => {loadCompanies()}, []);
-
-	const loadCompanies = async () => {
-		const res = await getCompaniesOfUser();
-		setCompanies(res.data);
-	}
+	useEffect(() => {
+		getCompaniesOfUser().then(resp => setCompanies(resp.data));
+	}, []);
 
 	const handleDelete = async (id: string) => {
 		if (confirm("Are you sure?")) {
 			await deleteCompany(id);
-			loadCompanies();
+			setCompanies(prev => prev.filter((company, _) => company.id !== id));
 		}
 	}
 

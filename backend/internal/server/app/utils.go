@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strings"
 
@@ -13,13 +14,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const maxMultipartMemory = 50 << 20 // 50mb
+
 type requestData struct {
 	userID    uuid.UUID
 	companyID uuid.UUID
 	tourID    uuid.UUID
 }
 
-func parseTourReqFromMultipart(r *http.Request) (*dto.TourRequest, error) {
+func parseTourReqFromMultipart(r *http.Request, checkLen bool) (*dto.TourRequest, error) {
+	if err := r.ParseMultipartForm(maxMultipartMemory); err != nil {
+		return nil, fmt.Errorf("failed to parse form: %w", err)
+	}
 	data := r.FormValue(config.DataKey)
 	if data == "" {
 		return nil, fmt.Errorf("missing data part")
@@ -31,7 +37,7 @@ func parseTourReqFromMultipart(r *http.Request) (*dto.TourRequest, error) {
 	if req.Name == "" {
 		return nil, fmt.Errorf("tour name is empty")
 	}
-	if len(req.Data.Nodes) != len(r.MultipartForm.File) {
+	if checkLen && len(req.Data.Nodes) != len(r.MultipartForm.File) {
 		return nil, fmt.Errorf("amount of provided images not equal to amount of nodes")
 	}
 	return &req, nil
@@ -73,4 +79,43 @@ func getRequestData(r *http.Request, fields map[string]struct{}) (*requestData, 
 		rd.tourID = tourID
 	}
 	return &rd, nil
+}
+
+func getNodesMap(nodes []*domain.TourNode) map[string]*domain.TourNode {
+	out := make(map[string]*domain.TourNode, len(nodes))
+	for _, node := range nodes {
+		out[node.ID] = node
+	}
+	return out
+}
+
+func getImagesToUpload(newNodes []*domain.TourNode, form *multipart.Form) map[string][]*multipart.FileHeader {
+	toUpload := make(map[string][]*multipart.FileHeader, 0)
+	for _, node := range newNodes {
+		if headers, ok := form.File[node.ID]; ok {
+			toUpload[node.ID] = headers
+		}
+	}
+	return toUpload
+}
+
+func getImagesToDelete(oldNodes, newNodes []*domain.TourNode, form *multipart.Form) []string {
+	toDelete := make([]string, 0)
+	reqNodesMap := getNodesMap(newNodes)
+	for _, node := range oldNodes {
+		reqNode, ok := reqNodesMap[node.ID]
+		_, isInMultipart := form.File[node.ID]
+		if !ok || (node.Panorama != reqNode.Panorama || isInMultipart) {
+			toDelete = append(toDelete, node.Panorama)
+		}
+	}
+	return toDelete
+}
+
+func updNodePanoramaPaths(nodes []*domain.TourNode, uploaded map[string]string) {
+	for _, node := range nodes {
+		if newPath, ok := uploaded[node.ID]; ok {
+			node.Panorama = newPath
+		}
+	}
 }

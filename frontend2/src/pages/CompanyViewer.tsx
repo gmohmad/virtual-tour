@@ -28,6 +28,7 @@ export const CompanyViewer: React.FC = () => {
 	const handleDeleteTour = async (tourId: string) => {
 		if (confirm("Are you sure?") && companyId) {
 			await deleteTour(companyId, tourId);
+			setTours(prev => prev.filter((tour, _) => tour.id !== tourId));
 		}
 	}
 

@@ -22,24 +22,19 @@ func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := r.ParseMultipartForm(50 << 20); err != nil {
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
-		return
-	}
-	tourReq, err := parseTourReqFromMultipart(r)
+	tourReq, err := parseTourReqFromMultipart(r, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, reqData.companyID.String())
+	toUpload := getImagesToUpload(tourReq.Data.Nodes, r.MultipartForm)
+	uploaded, err := s.s3.UploadFilesFromMultipart(toUpload, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, reqData.companyID.String())
 	if err != nil {
 		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
 		return
 	}
-	for i, node := range tourReq.Data.Nodes {
-		node.Panorama = uploaded[i]
-	}
+	updNodePanoramaPaths(tourReq.Data.Nodes, uploaded)
 
 	tour, err := s.storage.CreateTour(r.Context(), reqData.companyID, reqData.userID, tourReq.Name, *tourReq.Data)
 	if err != nil {
@@ -74,11 +69,7 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := r.ParseMultipartForm(50 << 20); err != nil {
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
-		return
-	}
-	tourReq, err := parseTourReqFromMultipart(r)
+	tourReq, err := parseTourReqFromMultipart(r, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -90,14 +81,14 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploaded, err := s.s3.UploadFilesFromMultipart(r.MultipartForm, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, existingTour.CompanyID.String())
+	toUpload := getImagesToUpload(tourReq.Data.Nodes, r.MultipartForm)
+	toDelete := getImagesToDelete(existingTour.Data.Nodes, tourReq.Data.Nodes, r.MultipartForm)
+	uploaded, err := s.s3.UploadFilesFromMultipart(toUpload, s.cfg.S3.Bucket, s.cfg.S3.ImagesPath, existingTour.CompanyID.String())
 	if err != nil {
 		http.Error(w, "Failed to upload images", http.StatusInternalServerError)
 		return
 	}
-	for i, node := range tourReq.Data.Nodes {
-		node.Panorama = uploaded[i]
-	}
+	updNodePanoramaPaths(tourReq.Data.Nodes, uploaded)
 
 	tour, err := s.storage.UpdateTour(r.Context(), reqData.companyID, reqData.userID, reqData.tourID, tourReq.Name, *tourReq.Data)
 	if err != nil {
@@ -108,12 +99,7 @@ func (s *Server) handleUpdateTour(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	keysToClean := make([]string, 0, len(existingTour.Data.Nodes))
-	for _, node := range existingTour.Data.Nodes {
-		keysToClean = append(keysToClean, node.Panorama)
-	}
-	if err := s.s3.DeleteFiles(s.cfg.S3.Bucket, keysToClean); err != nil {
+	if err := s.s3.DeleteFiles(s.cfg.S3.Bucket, toDelete); err != nil {
 		http.Error(w, "failed clearing old files", http.StatusInternalServerError)
 		return
 	}

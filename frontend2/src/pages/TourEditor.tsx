@@ -88,27 +88,15 @@ export const TourEditor: React.FC = () => {
 		const payload = {id: tourId, name: name, company_id: companyId, data: {nodes: nodes }};
 		const formData = new FormData();
 		formData.append("data", JSON.stringify(payload));
-
-		// TODO: fix image upload on update
-		const fetchPromises = nodes.map(async (node, idx) => {
-			if (nodeFiles[node.id] || !node.panorama) return;
-
-			const res = await fetch(getImageUrl(node.panorama));
-			const blob = await res.blob();
-			const file = new File([blob], `existing_${idx}.jpg`, { type: blob.type });
-			nodeFiles[node.id] = file;
-		});
-		await Promise.all(fetchPromises);
-
 		Object.entries(nodeFiles).forEach(([idx, file]) => {
-			formData.append(`img_${idx}`, file);
+			formData.append(idx, file);
 		});
 
 		try {
 			if (companyId && tourId) {
-				updateTour(companyId, tourId, formData);
+				await updateTour(companyId, tourId, formData);
 			} else if (companyId) {
-				createTour(companyId, formData);
+				await createTour(companyId, formData);
 			}
 			navigate(`/company/${companyId}`)
 		} catch (err) {

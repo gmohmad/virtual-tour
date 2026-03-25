@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/gmohmad/diploma/pkg/maputil"
 	"github.com/google/uuid"
 )
 
@@ -75,17 +76,17 @@ func (p *S3Provider) DeleteFiles(bucket string, keys []string) error {
 	return nil
 }
 
-func (s *S3Provider) UploadFilesFromMultipart(m *multipart.Form, s3bucket, s3path, companyID string) ([]string, error) {
-	uploaded := make([]string, 0)
+func (s *S3Provider) UploadFilesFromMultipart(m map[string][]*multipart.FileHeader, s3bucket, s3path, companyID string) (map[string]string, error) {
+	uploaded := make(map[string]string)
 
-	for fieldName, headers := range m.File {
+	for fieldName, headers := range m {
 		if len(headers) == 0 {
 			continue
 		}
 		fileHeader := headers[0]
 		file, err := fileHeader.Open()
 		if err != nil {
-			s.DeleteFiles(s3bucket, uploaded)
+			s.DeleteFiles(s3bucket, maputil.MapToSlice(uploaded))
 			return nil, fmt.Errorf("failed to open file %s: %w", fieldName, err)
 		}
 		defer file.Close()
@@ -93,10 +94,10 @@ func (s *S3Provider) UploadFilesFromMultipart(m *multipart.Form, s3bucket, s3pat
 		filename := uuid.New().String() + path.Ext(fileHeader.Filename)
 		path := path.Join(s3path, companyID, filename)
 		if err := s.Upload(path, s3bucket, file); err != nil {
-			s.DeleteFiles(s3bucket, uploaded)
+			s.DeleteFiles(s3bucket, maputil.MapToSlice(uploaded))
 			return nil, fmt.Errorf("failed to upload file %s: %w", filename, err)
 		}
-		uploaded = append(uploaded, path)
+		uploaded[fieldName] = path
 	}
 	return uploaded, nil
 }

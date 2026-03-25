@@ -42,7 +42,6 @@ func (h *Hub) ConnectToSession(sessionID uuid.UUID, client *Client) error {
 	if client.id == session.ownerID {
 		session.ownerJoinedAt = time.Now()
 	}
-	h.logger.Info("clients", zap.Any("", session.GetClientsAmount()))
 	return nil
 }
 
