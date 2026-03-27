@@ -17,6 +17,7 @@
     "react-modern-drawer": "^1.4.0",
     "react-photo-sphere-viewer": "^6.2.3",
     "react-router-dom": "^7.13.1",
+    "sweetalert2": "^11.26.24",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

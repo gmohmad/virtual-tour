@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { searchUsers } from "../services/appApi";
-import { useDebounce } from "../hooks/useDebounce";
-import type { User } from "../types/user";
+import { searchUsers } from "../../services/appApi";
+import { useDebounce } from "../../hooks/useDebounce";
+import type { User } from "../../types/user";
 
 interface UserSearchProps {
 	onUsersSelected: (users: User[]) => void;

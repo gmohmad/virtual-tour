@@ -1,0 +1,326 @@
+.companies-page {
+	padding: var(--space-8) 0;
+	min-height: calc(100vh - 80px);
+}
+
+.page-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--space-8);
+	gap: var(--space-6);
+}
+
+.header-content {
+	flex: 1;
+}
+
+.page-title {
+	font-size: var(--font-size-3xl);
+	margin-bottom: var(--space-2);
+	background: linear-gradient(135deg, var(--text-primary), var(--primary));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.page-subtitle {
+	color: var(--text-secondary);
+	font-size: var(--font-size-base);
+}
+
+.companies-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+	gap: var(--space-6);
+}
+
+.company-card {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+	transition: all var(--transition-normal);
+	animation: fadeIn var(--transition-slow) ease-out;
+	overflow: hidden;
+}
+
+.company-card:hover {
+	box-shadow: var(--shadow-md);
+	transform: translateY(-4px);
+	border-color: var(--border-focus);
+}
+
+.company-header {
+	padding: var(--space-6);
+	border-bottom: 1px solid var(--border);
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-4);
+}
+
+.company-info {
+	flex: 1;
+}
+
+.company-name {
+	font-size: var(--font-size-xl);
+	margin: 0 0 var(--space-2) 0;
+	color: var(--text-primary);
+	line-height: 1.3;
+}
+
+.company-meta {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	flex-wrap: wrap;
+}
+
+.company-id-container {
+	padding: var(--space-6);
+	padding-bottom: 0;
+}
+
+.company-id {
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	font-family: monospace;
+	background: var(--bg-surface);
+	padding: 2px 8px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+}
+
+.company-actions {
+	display: flex;
+	gap: var(--space-2);
+	flex-wrap: wrap;
+}
+
+.company-details {
+	padding: var(--space-6);
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--space-4);
+}
+
+.detail-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.detail-label {
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	font-weight: var(--font-weight-medium);
+}
+
+.detail-value {
+	font-size: var(--font-size-base);
+	color: var(--text-primary);
+	font-weight: var(--font-weight-semibold);
+}
+
+/* Empty State */
+.empty-state {
+	text-align: center;
+	padding: var(--space-12);
+	border: 2px dashed var(--border);
+	border-radius: var(--radius-lg);
+	background: var(--bg-surface);
+	margin: var(--space-8) 0;
+}
+
+.empty-icon {
+	font-size: 64px;
+	margin-bottom: var(--space-6);
+	opacity: 0.6;
+}
+
+.empty-title {
+	font-size: var(--font-size-2xl);
+	color: var(--text-primary);
+	margin-bottom: var(--space-4);
+}
+
+.empty-description {
+	font-size: var(--font-size-lg);
+	color: var(--text-secondary);
+	max-width: 600px;
+	margin: 0 auto var(--space-8);
+	line-height: 1.6;
+}
+
+/* Loading Skeleton */
+.skeleton {
+	position: relative;
+	overflow: hidden;
+}
+
+.skeleton::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	animation: shimmer 1.5s infinite;
+}
+
+.skeleton-header {
+	height: 24px;
+	background: var(--bg-surface);
+	border-radius: var(--radius-sm);
+	margin-bottom: var(--space-4);
+}
+
+.skeleton-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	margin-bottom: var(--space-4);
+}
+
+.skeleton-line {
+	height: 16px;
+	background: var(--bg-surface);
+	border-radius: var(--radius-sm);
+	width: 70%;
+}
+
+.skeleton-actions {
+	height: 36px;
+	background: var(--bg-surface);
+	border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+	0% { left: -100%; }
+	100% { left: 100%; }
+}
+
+/* Alerts */
+.alert {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-4);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border);
+	margin-bottom: var(--space-6);
+	animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.alert-error {
+	background-color: #fef2f2;
+	border-color: #fecaca;
+	color: var(--danger);
+}
+
+.alert-icon {
+	font-size: var(--font-size-lg);
+}
+
+.alert-message {
+	flex: 1;
+	font-weight: var(--font-weight-medium);
+}
+
+.alert-action {
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	font-size: var(--font-size-lg);
+	padding: 0;
+	width: 24px;
+	height: 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-full);
+	transition: background-color var(--transition-fast);
+}
+
+.alert-action:hover {
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+	.companies-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 768px) {
+	.page-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--space-4);
+	}
+
+	.companies-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.company-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--space-4);
+	}
+
+	.company-actions {
+		width: 100%;
+		justify-content: flex-end;
+	}
+
+	.company-details {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 480px) {
+	.page-title {
+		font-size: var(--font-size-2xl);
+	}
+
+	.empty-state {
+		padding: var(--space-8);
+	}
+
+	.empty-icon {
+		font-size: 48px;
+	}
+
+	.empty-title {
+		font-size: var(--font-size-xl);
+	}
+
+	.empty-description {
+		font-size: var(--font-size-base);
+	}
+}
+
+/* Dark theme enhancements */
+[data-theme="dark"] .company-card {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border: 1px solid #334155;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .page-title {
+	background: linear-gradient(135deg, #e2e8f0, #60a5fa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+[data-theme="dark"] .empty-state {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border-color: #334155;
+}

@@ -1,0 +1,325 @@
+.session-preview {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, var(--bg-body) 0%, var(--bg-surface) 100%);
+	padding: var(--space-8);
+}
+
+.preview-content {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	padding: var(--space-8);
+	max-width: 800px;
+	width: 100%;
+	animation: fadeIn var(--transition-slow) ease-out;
+	backdrop-filter: blur(10px);
+}
+
+/* Preview Header */
+.preview-header {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-6);
+	margin-bottom: var(--space-8);
+}
+
+.tour-preview-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+}
+
+.tour-name {
+	font-size: var(--font-size-3xl);
+	margin: 0;
+	background: linear-gradient(135deg, var(--text-primary), var(--primary));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	line-height: 1.2;
+}
+
+.tour-meta {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	flex-wrap: wrap;
+}
+
+.session-id {
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	font-family: monospace;
+	background: var(--bg-surface);
+	padding: 4px 8px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+}
+
+.tour-image-preview {
+	position: relative;
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	border: 1px solid var(--border);
+	background: var(--bg-surface);
+}
+
+.preview-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform var(--transition-normal);
+}
+
+.tour-image-preview:hover .preview-image {
+	transform: scale(1.05);
+}
+
+.preview-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+	padding: var(--space-4);
+}
+
+.preview-label {
+	color: white;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* Preview Details */
+.preview-details {
+	background: var(--bg-surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: var(--space-6);
+	margin-bottom: var(--space-8);
+}
+
+.detail-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--space-4);
+}
+
+.detail-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.detail-label {
+	font-size: var(--font-size-sm);
+	color: var(--text-secondary);
+	font-weight: var(--font-weight-medium);
+}
+
+.detail-value {
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-semibold);
+	color: var(--text-primary);
+}
+
+.detail-value.status.active {
+	color: var(--accent);
+}
+
+/* Preview Actions */
+.preview-actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+}
+
+.action-description {
+	font-size: var(--font-size-lg);
+	color: var(--text-secondary);
+	line-height: 1.6;
+	margin: 0;
+}
+
+.action-buttons {
+	display: flex;
+	gap: var(--space-4);
+	justify-content: flex-start;
+	flex-wrap: wrap;
+}
+
+.owner-actions {
+	background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.1));
+	border: 1px solid var(--primary);
+	border-radius: var(--radius-md);
+	padding: var(--space-6);
+}
+
+.viewer-actions {
+	background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.1));
+	border: 1px solid var(--accent);
+	border-radius: var(--radius-md);
+	padding: var(--space-6);
+}
+
+/* Loading State */
+.loading-spinner-large {
+	width: 48px;
+	height: 48px;
+	border: 4px solid rgba(255, 255, 255, 0.3);
+	border-top: 4px solid white;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin: 0 auto var(--space-6);
+	display: block;
+}
+
+.session-preview.loading h2,
+.session-preview.loading p {
+	color: white;
+	text-align: center;
+}
+
+/* Error State */
+.error-icon {
+	font-size: 64px;
+	margin: 0 auto var(--space-6);
+	display: block;
+	text-align: center;
+}
+
+.session-preview.error h2 {
+	color: white;
+	text-align: center;
+	margin: 0 0 var(--space-4) 0;
+}
+
+.session-preview.error p {
+	color: rgba(255, 255, 255, 0.9);
+	text-align: center;
+	margin: 0 0 var(--space-6) 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+	.preview-header {
+		grid-template-columns: 1fr;
+	}
+
+	.detail-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.preview-content {
+		padding: var(--space-6);
+	}
+
+	.tour-name {
+		font-size: var(--font-size-2xl);
+	}
+
+	.action-buttons {
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	.action-buttons .btn {
+		width: 100%;
+	}
+}
+
+@media (max-width: 480px) {
+	.preview-content {
+		padding: var(--space-4);
+	}
+
+	.tour-name {
+		font-size: var(--font-size-xl);
+	}
+
+	.preview-header {
+		gap: var(--space-4);
+	}
+
+	.tour-image-preview {
+		height: 200px;
+	}
+
+	.action-description {
+		font-size: var(--font-size-base);
+	}
+}
+
+/* Dark theme enhancements */
+[data-theme="dark"] .session-preview {
+	background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+}
+
+[data-theme="dark"] .preview-content {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border: 1px solid #334155;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .tour-name {
+	background: linear-gradient(135deg, #e2e8f0, #60a5fa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+[data-theme="dark"] .owner-actions {
+	background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(59, 130, 246, 0.15));
+	border-color: #3b82f6;
+}
+
+[data-theme="dark"] .viewer-actions {
+	background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(34, 197, 94, 0.15));
+	border-color: #10b981;
+}
+
+/* High contrast theme */
+[data-theme="high-contrast"] .session-preview {
+	background: white;
+}
+
+[data-theme="high-contrast"] .preview-content {
+	background: white;
+	border: 2px solid black;
+	box-shadow: 0 0 0 2px black;
+}
+
+[data-theme="high-contrast"] .tour-name {
+	color: black;
+	background: none;
+	-webkit-text-fill-color: initial;
+	background-clip: initial;
+}
+
+[data-theme="high-contrast"] .owner-actions {
+	background: white;
+	border: 2px solid blue;
+}
+
+[data-theme="high-contrast"] .viewer-actions {
+	background: white;
+	border: 2px solid green;
+}
+
+[data-theme="high-contrast"] .action-buttons .btn {
+	border: 2px solid black;
+}
+
+[data-theme="high-contrast"] .action-buttons .btn:hover {
+	background: black;
+	color: white;
+}

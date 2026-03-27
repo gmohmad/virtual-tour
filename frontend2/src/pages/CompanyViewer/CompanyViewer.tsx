@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { deleteTour, getCompanyByID, getCompanyTours } from "../services/appApi";
+import { deleteTour, getCompanyByID, getCompanyTours } from "../../services/appApi";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import type { Company } from "../types/company";
-import type { Tour } from "../types/tour";
-import { createSession } from "../services/livetourApi";
+import type { Company } from "../../types/company";
+import type { Tour } from "../../types/tour";
+import { createSession } from "../../services/livetourApi";
 
 export const CompanyViewer: React.FC = () => {
 	const { companyId } = useParams();

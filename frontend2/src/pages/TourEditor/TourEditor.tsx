@@ -1,8 +1,8 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { createTour, getTourByID, updateTour } from "../services/appApi";
-import type { TourLink, TourNode } from "../types/tour";
+import { createTour, getTourByID, updateTour } from "../../services/appApi";
+import type { TourLink, TourNode } from "../../types/tour";
 
 export const TourEditor: React.FC = () => {
 	const navigate = useNavigate();

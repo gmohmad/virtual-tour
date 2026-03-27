@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { User } from "../types/user";
-import { addMembersToCompany, createCompany, updateCompany } from "../services/appApi";
-import { UserSearch } from "../components/UserSearch";
+import type { User } from "../../types/user";
+import { addMembersToCompany, createCompany, updateCompany } from "../../services/appApi";
+import { UserSearch } from "../../components/UserSearch/UserSearch";
 
 export const CompanyEditor: React.FC = () => {
 	const navigate = useNavigate();
