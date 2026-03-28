@@ -91,6 +91,7 @@ func (s *Session) AddClient(client *Client) error {
 }
 
 func (s *Session) ShutDown() {
+	s.broadcast([]byte(`{"type":"session_ended"}`), true)
 	s.shutdown <- struct{}{}
 }
 

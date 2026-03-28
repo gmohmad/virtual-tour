@@ -114,11 +114,14 @@ func (s *Server) handleGetCompanyByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := dto.CompanyResponse{
-		ID:        company.ID.String(),
-		Name:      company.Name,
-		CreatedAt: company.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
+	resp := dto.CompanyWithUserRoleResponse{
+		CompanyResponse: dto.CompanyResponse{
+			ID:        company.ID.String(),
+			Name:      company.Name,
+			CreatedAt: company.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: company.UpdatedAt.Format(time.RFC3339),
+		},
+		UserRole: company.UserRole,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {

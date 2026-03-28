@@ -68,17 +68,20 @@ func (s *Storage) DeleteCompany(ctx context.Context, userID, companyID uuid.UUID
 	return nil
 }
 
-func (s *Storage) GetCompanyByID(ctx context.Context, userID, companyID uuid.UUID) (*domain.Company, error) {
-	if !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
+func (s *Storage) GetCompanyByID(ctx context.Context, userID, companyID uuid.UUID) (*domain.CompanyWithUserRole, error) {
+	if !s.CheckPermission(ctx, userID, companyID, config.MemberRole) {
 		return nil, domain.ErrInsufficientPermissions
 	}
-	query := `SELECT id, name, created_at, updated_at FROM companies WHERE id = $1`
-	rows, err := s.client.Query(ctx, query, companyID)
+	query := `SELECT c.id, c.name, c.created_at, c.updated_at, cr.role
+			  FROM companies c
+			  JOIN company_roles cr ON c.id = cr.company_id
+			  WHERE c.id = $2 AND cr.user_id = $1`
+	rows, err := s.client.Query(ctx, query, userID, companyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[domain.Company])
+	return pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByPos[domain.CompanyWithUserRole])
 }
 
 func (s *Storage) GetCompaniesOfUser(ctx context.Context, userID uuid.UUID) ([]*domain.CompanyWithUserRole, error) {
