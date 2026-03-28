@@ -1,5 +1,3 @@
-/* Scoped to this page — avoids clashes with CompaniesList (.page-header, .page-title, …) */
-
 .company-viewer-page {
 	padding: var(--space-8) 0;
 	min-height: calc(100vh - 80px);
