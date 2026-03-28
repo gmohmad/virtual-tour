@@ -3,13 +3,13 @@ import { getTourByID } from "../../services/appApi";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getSession, endSession } from "../../services/livetourApi";
-import type { Tour } from "../../types/tour";
+import type { Tour, TourNode } from "../../types/tour";
 import type { Session } from "../../types/session";
 import { OwnerTourViewer } from "../../components/OwnerTourViewer/OwnerTourViewer";
 import { ClientTourViewer } from "../../components/ClientTourViewer/ClientTourViewer";
 import { v4 as uuidv4 } from 'uuid';
-import './TourViewer.css';
 import Swal from "sweetalert2";
+import './TourViewer.css';
 
 export const TourViewer: React.FC = () => {
 	const [session, setSession] = useState<Session>();
@@ -29,7 +29,7 @@ export const TourViewer: React.FC = () => {
 			getSession(sessionId),
 			getTourByID(tourId).then(resp => {
 				const tourData = resp.data.data;
-				tourData.nodes.forEach(node => {
+				tourData.nodes.forEach((node: TourNode) => {
 					node.panorama = `${import.meta.env.VITE_APP_API_URL}/${node.panorama}`;
 				});
 				return resp.data;

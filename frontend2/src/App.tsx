@@ -22,7 +22,9 @@ function LayoutWithHeader() {
 }
 
 function ProtectedRoute() {
-	const { user } = useAuth();
+	const { user, isLoading } = useAuth();
+
+	if (isLoading) return <div>Loading</div>;
 
 	if (!user?.id) return <Navigate to="/login" replace />;
 

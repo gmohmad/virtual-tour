@@ -1,54 +1,87 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { User } from "../../types/user";
-import { addMembersToCompany, createCompany, updateCompany } from "../../services/appApi";
-import { UserSearch } from "../../components/UserSearch/UserSearch";
+import { createCompany, getCompanyByID, updateCompany } from "../../services/appApi";
+import "./CompanyEditor.css";
 
 export const CompanyEditor: React.FC = () => {
 	const navigate = useNavigate();
 	const { companyId } = useParams();
 	const [name, setName] = useState("");
-	const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!companyId) return;
+		setError(null);
+		getCompanyByID(companyId).
+			then(resp => setName(resp.data.name))
+			.catch(_ => setError("Failed to load company. Please try again."))
+	}, [])
 
 	const submit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
-		try {
-			if (companyId) {
-				await updateCompany(companyId, name);
-				if (selectedUsers.length > 0) await addMembersToCompany(companyId, selectedUsers.map(u => u.id));
-				navigate(`/company/${companyId}`);
-			} else {
-				const company = await createCompany(name);
-				if (selectedUsers.length > 0) await addMembersToCompany(company.data.id, selectedUsers.map(u => u.id));
-				navigate(`/company/${company.data.id}`);
-			}
-		} catch (err) {
-			alert(`Failed to save company: ${err.response.data}`);
-		}
+		if (companyId) {
+			await updateCompany(companyId, name).
+				then(resp => navigate(`/company/${resp.data.id}`))
+				.catch(_ => setError("Failed to update company. Please try again."));
+				console.log("error")
+		} else {
+			await createCompany(name)
+				.then(resp => navigate(`/company/${resp.data.id}`))
+				.catch(_ => setError("Failed to create company. Please try again."));
+		};
 	};
 
 	return (
-		<div>
-		<h1>{companyId ? "Edit Company" : "Create Company"}</h1>
-		<form onSubmit={submit}>
-		<label>Name</label>
-		<input
-		type="text"
-		minLength={3}
-		maxLength={16}
-		value={name}
-		onChange={(e) => setName(e.target.value)}
-		required
-		/>
-		<button type="submit">Submit</button>
-		</form>
+		<div className="company-editor-page">
+			<div className="container">
+				<div className="company-editor-card fade-in">
+					<h1 className="company-editor-title">{companyId ? "Edit company" : "Create company"}</h1>
+					<form onSubmit={submit}>
+						<div className="form-group">
+							<label htmlFor="company-name" className="form-label">
+								Name
+							</label>
+							<input
+								id="company-name"
+								type="text"
+								className="form-input"
+								minLength={3}
+								maxLength={16}
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								required
+								autoComplete="organization"
+							/>
+						</div>
+						<div className="company-editor-form-actions">
+							<button type="submit" className="btn btn-primary">
+								Save
+							</button>
+							{companyId ? (
+								<button
+									type="button"
+									className="btn btn-ghost"
+									onClick={() => navigate(`/company/${companyId}`)}
+								>
+									Cancel
+								</button>
+							) : null}
+						</div>
+					</form>
 
-		<hr />
-		<h3>Add Members</h3>
-		<UserSearch
-		onUsersSelected={setSelectedUsers}
-		initialSelected={selectedUsers}
-		/>
+					{error && (
+						<div className="alert alert-error">
+						<span className="alert-icon">⚠️</span>
+						<span className="alert-message">{error}</span>
+						<button
+							className="alert-action"
+							onClick={() => setError(null)}
+							aria-label="Dismiss"
+						>✕</button>
+						</div>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 };

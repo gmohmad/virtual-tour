@@ -10,6 +10,7 @@ interface User {
 interface AuthContextType {
 	user: User | null;
 	token: string | null;
+	isLoading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	register: (name: string, email: string, password: string) => Promise<void>;
 	logout: () => void;
@@ -19,24 +20,31 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}) => {
 	const [user, setUser] = useState<User | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 	const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
 	useEffect(() => {
 		const storedUser = localStorage.getItem("user");
 		if (storedUser) setUser(JSON.parse(storedUser));
+		setIsLoading(false);
 	}, []);
 
 	const login = async (email: string, password: string) => {
-		const res = await apiLogin(email, password);
-		const { token, user } = res.data;
-		localStorage.setItem("token", token);
-		localStorage.setItem("user", JSON.stringify(user));
-		setToken(token);
-		setUser(user);
+		setIsLoading(true);
+		await apiLogin(email, password).then(resp => {
+			const { token, user } = resp.data;
+			localStorage.setItem("token", token);
+			localStorage.setItem("user", JSON.stringify(user));
+			setToken(token);
+			setUser(user);
+		})
+		.catch(console.error)
+		.finally(() => setIsLoading(false));
 	};
 
 	const register = async (name: string, email: string, password: string) => {
-		await apiRegister(name, email, password);
+		setIsLoading(true);
+		await apiRegister(name, email, password).finally(() => setIsLoading(false));
 	};
 
 	const logout = () => {
@@ -47,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
 	};
 
 	return (
-		<AuthContext.Provider value={{ user, token, login, register, logout }}>
+		<AuthContext.Provider value={{ user, token, login, isLoading, register, logout }}>
 			{children}
 		</AuthContext.Provider>
 	);

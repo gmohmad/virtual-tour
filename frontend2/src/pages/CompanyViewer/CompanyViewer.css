@@ -1,0 +1,185 @@
+/* Scoped to this page — avoids clashes with CompaniesList (.page-header, .page-title, …) */
+
+.company-viewer-page {
+	padding: var(--space-8) 0;
+	min-height: calc(100vh - 80px);
+}
+
+.company-viewer-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-6);
+	margin-bottom: var(--space-8);
+	flex-wrap: wrap;
+}
+
+.company-viewer-head-main {
+	flex: 1;
+	min-width: min(100%, 280px);
+}
+
+.company-viewer-title {
+	font-size: var(--font-size-3xl);
+	margin: 0 0 var(--space-2) 0;
+	background: linear-gradient(135deg, var(--text-primary), var(--primary));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	line-height: 1.2;
+}
+
+.company-viewer-id {
+	display: inline-block;
+	font-size: var(--font-size-sm);
+	font-family: ui-monospace, monospace;
+	color: var(--text-muted);
+	background: var(--bg-surface);
+	padding: var(--space-1) var(--space-3);
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+	margin-bottom: var(--space-4);
+}
+
+.company-viewer-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-4);
+	margin-top: var(--space-2);
+}
+
+.company-viewer-meta-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	min-width: 140px;
+}
+
+.company-viewer-meta-label {
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	font-weight: var(--font-weight-medium);
+}
+
+.company-viewer-meta-value {
+	font-size: var(--font-size-base);
+	color: var(--text-primary);
+	font-weight: var(--font-weight-semibold);
+}
+
+.company-viewer-tours-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-4);
+	flex-wrap: wrap;
+	margin-bottom: var(--space-6);
+}
+
+.company-viewer-section-title {
+	font-size: var(--font-size-xl);
+	margin: 0;
+	color: var(--text-primary);
+}
+
+.company-viewer-tours-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--space-6);
+}
+
+.company-viewer-tour-card {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+	padding: var(--space-6);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+	transition: box-shadow var(--transition-normal), border-color var(--transition-normal),
+		transform var(--transition-normal);
+	animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.company-viewer-tour-card:hover {
+	box-shadow: var(--shadow-md);
+	border-color: var(--border-focus);
+	transform: translateY(-2px);
+}
+
+.company-viewer-tour-name {
+	font-size: var(--font-size-lg);
+	margin: 0;
+	color: var(--text-primary);
+}
+
+.company-viewer-tour-meta {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	font-size: var(--font-size-sm);
+	color: var(--text-secondary);
+}
+
+.company-viewer-tour-meta code {
+	font-size: var(--font-size-xs);
+	color: var(--text-muted);
+	background: var(--bg-surface);
+	padding: 2px 6px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+}
+
+.company-viewer-tour-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin-top: auto;
+	padding-top: var(--space-2);
+	border-top: 1px solid var(--border);
+}
+
+.company-viewer-empty {
+	text-align: center;
+	padding: var(--space-12) var(--space-6);
+	border: 2px dashed var(--border);
+	border-radius: var(--radius-lg);
+	background: var(--bg-surface);
+	color: var(--text-secondary);
+}
+
+.company-viewer-empty-title {
+	font-size: var(--font-size-lg);
+	color: var(--text-primary);
+	margin: 0 0 var(--space-2) 0;
+}
+
+@media (max-width: 640px) {
+	.company-viewer-head {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.company-viewer-title {
+		font-size: var(--font-size-2xl);
+	}
+}
+
+[data-theme="dark"] .company-viewer-title {
+	background: linear-gradient(135deg, #e2e8f0, #60a5fa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+[data-theme="dark"] .company-viewer-tour-card {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border-color: #334155;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .company-viewer-empty {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border-color: #334155;
+}

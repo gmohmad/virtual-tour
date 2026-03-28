@@ -13,16 +13,14 @@ export const CompaniesList: React.FC = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 
-	useEffect(() => {loadCompanies()}, [user?.id]);
-
-	const loadCompanies = async () => {
+	useEffect(() => {
 		setIsLoading(true);
 		setError(null);
 		getCompaniesOfUser().
 			then(resp => setCompanies(resp.data))
 			.catch(_ => setError("Failed to load companies. Please try again."))
 			.finally(() => setIsLoading(false));
-	};
+	}, [user?.id]);
 
 	const handleDelete = async (id: string, name: string) => {
 		const result = await Swal.fire({

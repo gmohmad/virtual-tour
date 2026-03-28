@@ -1,0 +1,168 @@
+/* Scoped — not .auth-* or .companies-page */
+
+.company-editor-page {
+	padding: var(--space-8) 0;
+	min-height: calc(100vh - 80px);
+}
+
+.company-editor-card {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+	padding: var(--space-8);
+	max-width: 640px;
+	margin: 0 auto var(--space-8);
+	animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.company-editor-title {
+	font-size: var(--font-size-3xl);
+	margin: 0 0 var(--space-6) 0;
+	background: linear-gradient(135deg, var(--text-primary), var(--primary));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	line-height: 1.2;
+}
+
+.company-editor-form-actions {
+	margin-top: var(--space-6);
+	display: flex;
+	gap: var(--space-3);
+	flex-wrap: wrap;
+}
+
+.company-editor-divider {
+	border: none;
+	border-top: 1px solid var(--border);
+	margin: var(--space-8) 0;
+}
+
+.company-editor-section-title {
+	font-size: var(--font-size-xl);
+	margin: 0 0 var(--space-4) 0;
+	color: var(--text-primary);
+}
+
+.company-editor-members {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+/* UserSearch lives inside — light touch so it matches the app */
+.company-editor-usersearch-wrap label {
+	display: block;
+	margin-bottom: var(--space-2);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--text-secondary);
+}
+
+.company-editor-usersearch-wrap input[type="text"] {
+	width: 100%;
+	padding: var(--space-3);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	font-size: var(--font-size-base);
+	background-color: var(--bg-card);
+	color: var(--text-primary);
+	transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+	outline: none;
+	margin-bottom: var(--space-2);
+}
+
+.company-editor-usersearch-wrap input[type="text"]:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.company-editor-usersearch-wrap > div:first-child {
+	margin-bottom: var(--space-6);
+}
+
+/* UserSearch: first column = search + dropdown */
+.company-editor-usersearch-wrap > div:first-child ul {
+	list-style: none;
+	margin: var(--space-2) 0 0;
+	padding: 0;
+	max-height: 180px;
+	overflow-y: auto;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	background: var(--bg-card);
+	box-shadow: var(--shadow-sm);
+}
+
+.company-editor-usersearch-wrap > div:first-child ul li {
+	padding: var(--space-3) var(--space-4);
+	cursor: pointer;
+	font-size: var(--font-size-sm);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border);
+	transition: background-color var(--transition-fast);
+}
+
+.company-editor-usersearch-wrap > div:first-child ul li:last-child {
+	border-bottom: none;
+}
+
+.company-editor-usersearch-wrap > div:first-child ul li:hover {
+	background: var(--bg-surface);
+}
+
+.company-editor-usersearch-wrap h4 {
+	font-size: var(--font-size-base);
+	margin: var(--space-6) 0 var(--space-3) 0;
+	color: var(--text-primary);
+}
+
+.company-editor-usersearch-wrap > div:last-child ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.company-editor-usersearch-wrap > div:last-child ul li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--space-4);
+	background: var(--bg-surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	font-size: var(--font-size-sm);
+	color: var(--text-primary);
+}
+
+.company-editor-loading-hint {
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	margin-left: var(--space-2);
+}
+
+@media (max-width: 640px) {
+	.company-editor-card {
+		padding: var(--space-6);
+	}
+
+	.company-editor-title {
+		font-size: var(--font-size-2xl);
+	}
+}
+
+[data-theme="dark"] .company-editor-title {
+	background: linear-gradient(135deg, #e2e8f0, #60a5fa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+[data-theme="dark"] .company-editor-card {
+	background: linear-gradient(145deg, #0f172a, #111827);
+	border-color: #334155;
+}
