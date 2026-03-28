@@ -13,7 +13,6 @@ export const CompaniesList: React.FC = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 
-	useEffect(() => {if (!user?.id) navigate("/login")}, []);
 	useEffect(() => {loadCompanies()}, [user?.id]);
 
 	const loadCompanies = async () => {

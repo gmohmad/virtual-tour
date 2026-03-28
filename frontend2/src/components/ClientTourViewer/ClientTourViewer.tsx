@@ -7,7 +7,6 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 import type { Tour } from "../../types/tour";
 import type { Session } from "../../types/session";
 import Swal from "sweetalert2";
-import { endSession } from "../../services/livetourApi";
 
 interface ClientTourViewerProps {
 	tour: Tour;
