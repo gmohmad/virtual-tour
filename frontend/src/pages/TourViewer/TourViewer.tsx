@@ -104,10 +104,6 @@ export const TourViewer: React.FC = () => {
 								<span className="detail-value">Interactive Virtual Tour</span>
 							</div>
 							<div className="detail-item">
-								<span className="detail-label">Session Status</span>
-								<span className="detail-value status active">Active</span>
-							</div>
-							<div className="detail-item">
 								<span className="detail-label">Host</span>
 								<span className="detail-value">{isOwner ? "You" : session.owner_id}</span>
 							</div>

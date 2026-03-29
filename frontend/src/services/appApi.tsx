@@ -23,6 +23,18 @@ export const searchUsers = (email: string) => {
 	return api.get(`/search-users?email=${email}`);
 }
 
+export const changeUserRole = (companyId: string, target_user_id: string, role: string) => {
+	return api.post(`/company/${companyId}/change-user-role`, {target_user_id, role});
+}
+
+export const removeUserFromCompany = (companyId: string, target_user_id: string) => {
+	return api.post(`/company/${companyId}/delete-user`, {target_user_id});
+}
+
+export const addMembersToCompany = (id: string, user_ids: string[]) => {
+	return api.post(`/add-members-to-company/${id}`, { user_ids })
+}
+
 // company
 export const getCompanyByID = (id: string) => {
 	return api.get(`/get-company/${id}`);
@@ -44,8 +56,8 @@ export const deleteCompany = (id: string) => {
 	return api.delete(`/delete-company/${id}`);
 };
 
-export const addMembersToCompany = (id: string, user_ids: string[]) => {
-	return api.post(`/add-members-to-company/${id}`, { user_ids })
+export const getUsersOfCompany = (id: string) => {
+	return api.get(`/company/${id}/get-users`)
 }
 
 // tour

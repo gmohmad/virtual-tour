@@ -98,7 +98,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	}, []);
 
 	return (
-		<div className="tour-viewer owner-viewer">
+		<div className="tour-viewer">
 			{/* Immersive Viewer */}
 			<div className="viewer-container">
 				<ReactPhotoSphereViewer

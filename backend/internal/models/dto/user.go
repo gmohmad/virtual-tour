@@ -31,3 +31,8 @@ type AuthResponse struct {
 type UserIDsBatch struct {
 	UserIDs []uuid.UUID `json:"user_ids"`
 }
+
+type UserRoleRequest struct {
+	TargetUserID uuid.UUID `json:"target_user_id"`
+	Role         string    `json:"role"`
+}

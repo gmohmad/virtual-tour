@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/gmohmad/diploma/internal/config"
 	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -67,17 +68,51 @@ func (s *Storage) GetUsersByEmailSearch(ctx context.Context, userID uuid.UUID, e
 }
 
 func (s *Storage) GetUsersByCompanyID(ctx context.Context, userID, companyID uuid.UUID) ([]*domain.UserWithRole, error) {
+	if !s.CheckPermission(ctx, userID, companyID, config.MemberRole) {
+		return nil, domain.ErrInsufficientPermissions
+	}
 	query := `
-        SELECT u.id, u.name, u.email, u.created_at, u.updated_at, cr.role
+        SELECT u.id, u.name, u.email, u.password_hash, u.created_at, u.updated_at, cr.role
         FROM users u
         JOIN company_roles cr ON u.id = cr.user_id
-        WHERE cr.company_id = $2 AND cr.user_id != $1
+        WHERE cr.company_id = $1
     `
-	rows, err := s.client.Query(ctx, query, userID, companyID)
+	rows, err := s.client.Query(ctx, query, companyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	return pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[domain.UserWithRole])
+}
+
+func (s *Storage) ChangeUserRole(ctx context.Context, userID, targetUserID, companyID uuid.UUID, newRole string) error {
+	if !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
+		return domain.ErrInsufficientPermissions
+	}
+	query := `UPDATE company_roles
+	          SET role = $3
+	          WHERE user_id = $1 AND company_id = $2`
+	commandTag, err := s.client.Exec(ctx, query, targetUserID, companyID, newRole)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+
+func (s *Storage) DeleteUserCompanyRole(ctx context.Context, userID, targetUserID, companyID uuid.UUID) error {
+	if !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
+		return domain.ErrInsufficientPermissions
+	}
+	query := `DELETE FROM company_roles WHERE user_id = $1 AND company_id = $2`
+	commandTag, err := s.client.Exec(ctx, query, targetUserID, companyID)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }

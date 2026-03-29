@@ -58,6 +58,9 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("GET /get-user-companies", common.AuthMiddleware(s.handleGetCompaniesOfUser))
 	r.HandleFunc("POST /add-members-to-company/{companyId}", common.AuthMiddleware(s.handleAddMemberToCompany))
 
+	r.HandleFunc("POST /company/{companyId}/delete-user", common.AuthMiddleware(s.handleRemoveUserFromCompany))
+	r.HandleFunc("POST /company/{companyId}/change-user-role", common.AuthMiddleware(s.handleChangeUserRole))
+	r.HandleFunc("GET /company/{companyId}/get-users", common.AuthMiddleware(s.handleGetUserOfCompany))
 	r.HandleFunc("POST /company/{companyId}/create-tour", common.AuthMiddleware(s.handleCreateTour))
 	r.HandleFunc("PUT /company/{companyId}/update-tour/{tourId}", common.AuthMiddleware(s.handleUpdateTour))
 	r.HandleFunc("DELETE /company/{companyId}/delete-tour/{tourId}", common.AuthMiddleware(s.handleDeleteTour))

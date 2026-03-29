@@ -26,6 +26,12 @@
 	z-index: 100;
 }
 
+.control-panel {
+	background: var(--bg-card) !important;
+	display: flex;
+	flex-direction: column;
+}
+
 .session-info {
 	pointer-events: auto;
 	background: rgba(0, 0, 0, 0.4);
@@ -162,6 +168,7 @@
 	gap: var(--space-8);
 	max-height: calc(100vh - 80px);
 	overflow-y: auto;
+	background: var(--bg-card);
 }
 
 .panel-section {
@@ -177,6 +184,7 @@
 	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+	background: var(--bg-card);
 }
 
 /* Info Grid */
@@ -364,40 +372,4 @@
 [data-theme="dark"] .control-panel {
 	background: rgba(17, 24, 39, 0.95);
 	border-left-color: #334155;
-}
-
-/* High contrast theme */
-[data-theme="high-contrast"] .tour-viewer {
-	background: black;
-}
-
-[data-theme="high-contrast"] .session-info {
-	background: white;
-	border: 2px solid black;
-	color: black;
-}
-
-[data-theme="high-contrast"] .tour-title h2 {
-	color: black;
-	text-shadow: none;
-}
-
-[data-theme="high-contrast"] .panel-toggle {
-	background: white;
-	border: 2px solid black;
-	color: black;
-}
-
-[data-theme="high-contrast"] .control-panel {
-	background: white;
-	border-left: 3px solid black;
-}
-
-[data-theme="high-contrast"] .info-item {
-	border: 2px solid black;
-	background: white;
-}
-
-[data-theme="high-contrast"] .switch-label input[type="checkbox"] {
-	accent-color: black;
 }

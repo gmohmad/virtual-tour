@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gmohmad/diploma/internal/auth"
 	"github.com/gmohmad/diploma/internal/config"
@@ -127,4 +128,90 @@ func (s *Server) handleSearchUsers(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 	}
+}
+
+func (s *Server) handleGetUserOfCompany(w http.ResponseWriter, r *http.Request) {
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	users, err := s.storage.GetUsersByCompanyID(r.Context(), reqData.userID, reqData.companyID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Company not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	resp := make([]dto.User, 0, len(users))
+	for _, user := range users {
+		resp = append(resp, dto.User{
+			ID:        user.ID.String(),
+			Name:      user.Name,
+			Email:     user.Email,
+			Role:      user.Role,
+			CreatedAt: user.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleChangeUserRole(w http.ResponseWriter, r *http.Request) {
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var req dto.UserRoleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.storage.ChangeUserRole(r.Context(), reqData.userID, req.TargetUserID, reqData.companyID, req.Role); err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Company not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	common.WriteResponse(w, "success", http.StatusOK)
+}
+
+func (s *Server) handleRemoveUserFromCompany(w http.ResponseWriter, r *http.Request) {
+	reqData, err := getRequestData(r, map[string]struct{}{config.UserIDKey: {}, config.CompanyIDKey: {}})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var req dto.UserRoleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.storage.DeleteUserCompanyRole(r.Context(), reqData.userID, req.TargetUserID, reqData.companyID); err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Company not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	common.WriteResponse(w, "success", http.StatusOK)
 }
