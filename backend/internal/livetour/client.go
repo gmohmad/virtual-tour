@@ -35,6 +35,10 @@ func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn) *Client {
 	}
 }
 
+func (c *Client) GetID() uuid.UUID {
+	return c.id
+}
+
 func (c *Client) writeMessage(message []byte) error {
 	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 	w, err := c.conn.NextWriter(websocket.TextMessage)

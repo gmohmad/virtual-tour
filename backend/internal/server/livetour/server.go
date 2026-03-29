@@ -53,7 +53,7 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("POST /create-session", common.AuthMiddleware(s.handleCreateSession))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.66.102:3000"},
+		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.55.102:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,

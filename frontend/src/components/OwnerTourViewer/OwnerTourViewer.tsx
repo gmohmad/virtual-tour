@@ -26,31 +26,12 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const latestState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
 
 	const navigate = useNavigate();
-	const { sendMessage, ws } = useWebSocket(wsUrl);
+	const { sendMessage, connectionStatus } = useWebSocket(wsUrl);
 	const [openPanel, setOpenPanel] = useState(false);
-	const [connStatus, setConnStatus] = useState("connecting");
 	const [isStreaming, setIsStreaming] = useState(true);
 	const isStreamingRef = useRef(isStreaming);
 
 	useEffect(() => {isStreamingRef.current = isStreaming}, [isStreaming]);
-	useEffect(() => {if (ws?.readyState) {
-		switch (ws.readyState) {
-			case WebSocket.CONNECTING:
-				setConnStatus("connecting");
-			break;
-			case WebSocket.OPEN:
-				setConnStatus("connected");
-			break;
-			case WebSocket.CLOSING:
-				setConnStatus("closing");
-			break;
-			case WebSocket.CLOSED:
-				setConnStatus("disconnected");
-			break;
-			default:
-				setConnStatus("unknown");
-		}
-	}}, [ws?.readyState]);
 
 	const startMessageSend = (interval: number) => {
 		intervalRef.current = window.setInterval(() => {
@@ -113,8 +94,8 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 				<div className="viewer-overlay">
 					<div className="session-info">
 						<div className="connection-status">
-							<div className={`status-dot ${connStatus}`}></div>
-							<span className="status-text">{connStatus}</span>
+							<div className={`status-dot ${connectionStatus}`}></div>
+							<span className="status-text">{connectionStatus}</span>
 						</div>
 					</div>
 				</div>
@@ -167,8 +148,8 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 							</div>
 							<div className="info-item">
 								<span className="info-label">Status:</span>
-								<span className={`info-value status ${connStatus}`}>
-									{connStatus.toUpperCase()}
+								<span className={`info-value status ${connectionStatus}`}>
+									{connectionStatus.toUpperCase()}
 								</span>
 							</div>
 						</div>

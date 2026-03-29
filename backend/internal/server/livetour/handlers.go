@@ -23,7 +23,6 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
 		ID:         session.GetID(),
 		OwnerID:    session.GetOwnerID(),
-		ClientsLen: session.GetClientsAmount(),
 	}); err != nil {
 		http.Error(w, "Failed writing response", http.StatusInternalServerError)
 	}
@@ -61,10 +60,14 @@ func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	clients := make([]dto.Client, 0, session.GetClientsAmount())
+	for _, client := range session.GetClients() {
+		clients = append(clients, dto.Client{ID: client.GetID()})
+	}
 	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
-		ID:         session.GetID(),
-		OwnerID:    session.GetOwnerID(),
-		ClientsLen: session.GetClientsAmount(),
+		ID:      session.GetID(),
+		OwnerID: session.GetOwnerID(),
+		Clients: clients,
 	}); err != nil {
 		http.Error(w, "Failed writing response", http.StatusInternalServerError)
 	}

@@ -48,6 +48,14 @@ func (s *Session) GetClientsAmount() int {
 	return s.clients.Len()
 }
 
+func (s *Session) GetClients() []*Client {
+	out := make([]*Client, 0, s.clients.Len())
+	s.clients.Range(func(key uuid.UUID, value *Client) {
+		out = append(out, value)
+	})
+	return out
+}
+
 func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 	pingTicker := time.NewTicker(pingPeriod)
 	defer pingTicker.Stop()
@@ -68,9 +76,7 @@ func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 			}
 
 		case msg := <-s.incoming:
-			if msg.ClientID == s.ownerID {
-				s.broadcast(msg.Data, false)
-			}
+			s.broadcast(msg.Data, msg.ClientID)
 
 		case <-pingTicker.C:
 			s.ping()
@@ -91,7 +97,7 @@ func (s *Session) AddClient(client *Client) error {
 }
 
 func (s *Session) ShutDown() {
-	s.broadcast([]byte(`{"type":"session_ended"}`), true)
+	s.broadcast([]byte(`{"type":"session_ended"}`), s.ownerID)
 	s.shutdown <- struct{}{}
 }
 
@@ -102,10 +108,10 @@ func (s *Session) Close() {
 	close(s.unregister)
 }
 
-func (s *Session) broadcast(message []byte, skipOwner bool) {
+func (s *Session) broadcast(message []byte, authorID uuid.UUID) {
 	var failed []*Client
 	s.clients.Range(func(key uuid.UUID, value *Client) {
-		if skipOwner && key == s.ownerID {
+		if key == authorID {
 			return
 		}
 		if err := value.writeMessage(message); err != nil {
