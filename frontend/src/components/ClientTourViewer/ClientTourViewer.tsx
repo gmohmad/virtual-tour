@@ -27,6 +27,7 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
 	const tourReadyRef = useRef(false);
+	const currentViewStateRef = useRef({ node: tour.data.nodes[0].id, yaw: 0, pitch: 0, zoomLevel: 0 });
 	const [openPanel, setOpenPanel] = React.useState(false);
 
 	const navigate = useNavigate();
@@ -87,9 +88,26 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 		if (!viewerRef.current || !virtualTourRef.current) return;
 		const data = msg.data;
 		if (!data) return;
-		if (data.nodeId) virtualTourRef.current.setCurrentNode(data.nodeId);
-		if (data.yaw != null && data.pitch != null) viewerRef.current.rotate({ yaw: data.yaw, pitch: data.pitch });
-		if (data.zoomLevel != null) viewerRef.current.zoom(data.zoomLevel);
+
+		if (data.nodeId && data.nodeId !== currentViewStateRef.current.node) {
+			currentViewStateRef.current.node = data.nodeId;
+			void virtualTourRef.current.setCurrentNode(data.nodeId).catch((e: unknown) => {
+				console.error("Failed to switch node", e);
+			});
+		}
+		if (
+			data.yaw != null &&
+			data.pitch != null &&
+			(data.yaw !== currentViewStateRef.current.yaw || data.pitch !== currentViewStateRef.current.pitch)
+		) {
+			currentViewStateRef.current.yaw = data.yaw;
+			currentViewStateRef.current.pitch = data.pitch;
+			viewerRef.current.rotate({ yaw: data.yaw, pitch: data.pitch });
+		}
+		if (data.zoomLevel != null && data.zoomLevel !== currentViewStateRef.current.zoomLevel) {
+			currentViewStateRef.current.zoomLevel = data.zoomLevel;
+			viewerRef.current.zoom(data.zoomLevel);
+		}
 	};
 
 	tourMsgRef.current = (raw: string) => {
@@ -123,6 +141,7 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 		tour.data.nodes = tour.data.nodes.map(({ links, ...node }) => node);
 		if (tour.data.nodes.length > 0) virtualTour.setNodes(tour.data.nodes, tour.data.nodes[0].id);
 		tourReadyRef.current = true;
+		currentViewStateRef.current.node = tour.data.nodes[0].id;
 	};
 
 	const isHost = session.owner_id === selfClientId;

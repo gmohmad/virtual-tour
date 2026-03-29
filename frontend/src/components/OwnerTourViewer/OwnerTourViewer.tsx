@@ -28,6 +28,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const virtualTourRef = useRef<any>(null);
 	const intervalRef = useRef<number>(3);
 	const latestState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
+	const lastSentState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
 
 	const navigate = useNavigate();
 	const voiceHandlerRef = useRef<(raw: string) => void>(() => {});
@@ -57,8 +58,16 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const startMessageSend = (interval: number) => {
 		intervalRef.current = window.setInterval(() => {
 			const { nodeId, yaw, pitch, zoom } = latestState.current;
-			if (nodeId && isStreamingRef.current)
+			const isSameAsLast =
+				lastSentState.current.nodeId === nodeId &&
+				lastSentState.current.yaw === yaw &&
+				lastSentState.current.pitch === pitch &&
+				lastSentState.current.zoom === zoom;
+
+			if (nodeId && isStreamingRef.current && !isSameAsLast) {
 				sendMessage({ type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom } });
+				lastSentState.current = { nodeId, yaw, pitch, zoom };
+			}
 		}, interval);
 	};
 
@@ -81,6 +90,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 		virtualTourRef.current = virtualTour;
 
 		if (tour.data.nodes.length > 0) virtualTour.setNodes(tour.data.nodes, tour.data.nodes[0].id);
+		latestState.current.nodeId = tour.data.nodes[0]?.id ?? "";
 		setUpListeners();
 		startMessageSend(10);
 	};
