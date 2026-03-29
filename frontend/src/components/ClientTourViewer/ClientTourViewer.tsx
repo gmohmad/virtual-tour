@@ -1,99 +1,134 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Drawer from 'react-modern-drawer';
+import Drawer from "react-modern-drawer";
 import { ReactPhotoSphereViewer } from "react-photo-sphere-viewer";
 import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import { useVoiceChat } from "../../hooks/useVoiceChat";
 import type { Tour } from "../../types/tour";
 import type { Session } from "../../types/session";
 import Swal from "sweetalert2";
+import { SessionClientsPanel } from "../SessionClientsPanel/SessionClientsPanel";
+import "../OwnerTourViewer/OwnerTourViewer.css";
 
 interface ClientTourViewerProps {
 	tour: Tour;
 	session: Session;
 	wsUrl: string;
+	selfClientId: string;
 }
 
 export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 	tour,
 	session,
 	wsUrl,
+	selfClientId,
 }) => {
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
-	const [isReady, setIsReady] = useState(false);
-	const [openPanel, setOpenPanel] = useState(false);
+	const tourReadyRef = useRef(false);
+	const [openPanel, setOpenPanel] = React.useState(false);
 
 	const navigate = useNavigate();
-	const { lastMessage, connectionStatus } = useWebSocket(wsUrl);
+	const voiceHandlerRef = useRef<(raw: string) => void>(() => {});
+	const tourMsgRef = useRef<(raw: string) => void>(() => {});
 
-	const processMessage = (msg: any) => {
-		if (!viewerRef.current || !virtualTourRef.current) return;
-		const { type, error, data } = msg;
-		switch (type) {
-			case "state":
-				if (data?.nodeId) virtualTourRef.current.setCurrentNode(data.nodeId);
-				if (data?.yaw && data?.pitch) viewerRef.current.rotate({ yaw: data.yaw, pitch: data.pitch });
-				if (data?.zoomLevel) viewerRef.current.zoom(data.zoomLevel);
-				break;
-			case "session_ended":
-				handleSessionEnd();
-				break;
-			case "error":
-				handleSessionError(error);
-				break;
-		}
+	const { sendMessage, connectionStatus } = useWebSocket(wsUrl, {
+		onMessage: (data) => {
+			voiceHandlerRef.current(data);
+			tourMsgRef.current(data);
+		},
+	});
+
+	const voice = useVoiceChat({
+		selfId: selfClientId,
+		sendMessage,
+		connectionStatus,
+	});
+
+	voiceHandlerRef.current = (raw) => {
+		void voice.handleSocketMessage(raw);
 	};
 
 	const handleSessionEnd = async () => {
 		const result = await Swal.fire({
-			title: 'Session ended',
-			text: `Session was ended by the owner`,
-			icon: 'info',
-			confirmButtonText: 'Ok',
-			customClass: {
-				confirmButton: 'btn btn-primary',
-			}
+			title: "Session ended",
+			text: "Session was ended by the owner",
+			icon: "info",
+			confirmButtonText: "Ok",
+			customClass: { confirmButton: "btn btn-primary" },
 		});
-		if (result.isConfirmed) navigate("/login")
-	}
+		if (result.isConfirmed) navigate("/login");
+	};
+
+	const handleKicked = async () => {
+		const result = await Swal.fire({
+			title: "Removed from session",
+			text: "The host removed you from this live tour.",
+			icon: "warning",
+			confirmButtonText: "Ok",
+			customClass: { confirmButton: "btn btn-primary" },
+		});
+		if (result.isConfirmed) navigate("/login");
+	};
 
 	const handleSessionError = async (errorMessage: string) => {
 		const result = await Swal.fire({
-			title: 'Session error',
+			title: "Session error",
 			text: `${errorMessage}`,
-			icon: 'error',
-			confirmButtonText: 'Ok',
-			customClass: {
-				confirmButton: 'btn btn-primary',
-			}
+			icon: "error",
+			confirmButtonText: "Ok",
+			customClass: { confirmButton: "btn btn-primary" },
 		});
-		if (result.isConfirmed) navigate("/login")
-	}
+		if (result.isConfirmed) navigate("/login");
+	};
+
+	const processStateMessage = (msg: { data?: { nodeId?: string; yaw?: number; pitch?: number; zoomLevel?: number } }) => {
+		if (!viewerRef.current || !virtualTourRef.current) return;
+		const data = msg.data;
+		if (!data) return;
+		if (data.nodeId) virtualTourRef.current.setCurrentNode(data.nodeId);
+		if (data.yaw != null && data.pitch != null) viewerRef.current.rotate({ yaw: data.yaw, pitch: data.pitch });
+		if (data.zoomLevel != null) viewerRef.current.zoom(data.zoomLevel);
+	};
+
+	tourMsgRef.current = (raw: string) => {
+		try {
+			const msg = JSON.parse(raw) as { type?: string; error?: string; data?: { nodeId?: string; yaw?: number; pitch?: number; zoomLevel?: number } };
+			const t = msg.type;
+			if (t === "kicked") {
+				void handleKicked();
+				return;
+			}
+			if (t === "session_ended") {
+				void handleSessionEnd();
+				return;
+			}
+			if (t === "error") {
+				void handleSessionError(msg.error ?? "Unknown error");
+				return;
+			}
+			if (t === "state") {
+				if (!tourReadyRef.current) return;
+				processStateMessage(msg);
+			}
+		} catch {}
+	};
 
 	const handleReady = (instance: any) => {
 		viewerRef.current = instance;
 		const virtualTour = instance.getPlugin(VirtualTourPlugin);
 		virtualTourRef.current = virtualTour;
 
-		tour.data.nodes = tour.data.nodes.map(({ links, ...node }) => node)
+		tour.data.nodes = tour.data.nodes.map(({ links, ...node }) => node);
 		if (tour.data.nodes.length > 0) virtualTour.setNodes(tour.data.nodes, tour.data.nodes[0].id);
-		setIsReady(true);
+		tourReadyRef.current = true;
 	};
 
-	useEffect(() => {
-		if (!isReady || !lastMessage) return;
-		try {
-			const msg = JSON.parse(lastMessage);
-			processMessage(msg);
-		} catch (e) {
-			console.error("Failed to parse message", e);
-		}
-	}, [lastMessage, isReady]);
+	const isHost = session.owner_id === selfClientId;
 
 	return (
 		<div className="tour-viewer owner-viewer">
-			{/* Immersive Viewer */}
 			<div className="viewer-container">
 				<ReactPhotoSphereViewer
 					src={tour.data.nodes[0]?.panorama}
@@ -106,9 +141,8 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 					mousemove={false}
 					touchmoveTwoFingers={false}
 					keyboard={false}
-					/>
+				/>
 
-				{/* Control Overlay */}
 				<div className="viewer-overlay">
 					<div className="session-info">
 						<div className="connection-status">
@@ -119,35 +153,25 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 				</div>
 			</div>
 
-			{/* Floating Panel Toggle */}
 			{!openPanel && (
-				<button
-					className="panel-toggle"
-					onClick={() => setOpenPanel(true)}
-					title="Open Control Panel"
-				>
+				<button className="panel-toggle" onClick={() => setOpenPanel(true)} title="Open Control Panel" type="button">
 					☰
 				</button>
 			)}
 
-			{/* Control Panel */}
 			<Drawer
 				open={openPanel}
 				onClose={() => setOpenPanel(false)}
 				direction="right"
 				overlayOpacity={0.5}
 				overlayColor="rgba(0,0,0,0.5)"
-				size={320}
+				size={360}
 				className="control-panel"
 				lockBackgroundScroll
 			>
 				<div className="panel-header">
 					<h3>Session Controls</h3>
-					<button
-						className="btn btn-ghost"
-						onClick={() => setOpenPanel(false)}
-						title="Close Panel"
-					>
+					<button className="btn btn-ghost" onClick={() => setOpenPanel(false)} title="Close Panel" type="button">
 						✕
 					</button>
 				</div>
@@ -166,20 +190,26 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 							</div>
 							<div className="info-item">
 								<span className="info-label">Status:</span>
-								<span className={`info-value status ${connectionStatus}`}>
-									{connectionStatus.toUpperCase()}
-								</span>
+								<span className={`info-value status ${connectionStatus}`}>{connectionStatus.toUpperCase()}</span>
 							</div>
 						</div>
 					</div>
 
+					<SessionClientsPanel
+						participants={voice.participants}
+						selfId={selfClientId}
+						isOwner={isHost}
+						localMicMuted={voice.localMicMuted}
+						serverMuted={voice.serverMuted}
+						onToggleMic={voice.toggleLocalMic}
+						onKick={voice.kickParticipant}
+						onRemoteMute={voice.setParticipantRemoteMute}
+					/>
+
 					<div className="panel-section">
 						<h4>Actions</h4>
 						<div className="action-buttons">
-							<button
-								className="btn btn-danger w-full"
-								onClick={() => {navigate("/login")}}
-							>
+							<button className="btn btn-danger w-full" type="button" onClick={() => navigate("/login")}>
 								Leave
 							</button>
 						</div>
@@ -187,5 +217,5 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 				</div>
 			</Drawer>
 		</div>
-	)
-}
+	);
+};

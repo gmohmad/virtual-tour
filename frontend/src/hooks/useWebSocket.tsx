@@ -2,10 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ConnectionStatus = "connecting" | "connected" | "closing" | "disconnected" | "unknown";
 
-export const useWebSocket = (url: string) => {
+export type UseWebSocketOptions = {
+	onMessage?: (data: string) => void;
+};
+
+export const useWebSocket = (url: string, options?: UseWebSocketOptions) => {
 	const [lastMessage, setLastMessage] = useState<string | null>(null);
 	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
 	const wsRef = useRef<WebSocket | null>(null);
+	const onMessageRef = useRef(options?.onMessage);
+	onMessageRef.current = options?.onMessage;
 
 	useEffect(() => {
 		const ws = new WebSocket(url);
@@ -27,6 +33,7 @@ export const useWebSocket = (url: string) => {
 
 		ws.onmessage = (event) => {
 			setLastMessage(event.data);
+			onMessageRef.current?.(event.data);
 		};
 
 		return () => {

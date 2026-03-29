@@ -9,5 +9,9 @@ type SessionResponse struct {
 }
 
 type Client struct {
-	ID uuid.UUID `json:"id"`
+	ID          uuid.UUID `json:"id"`
+	DisplayName string    `json:"display_name"`
+	MicMuted    bool      `json:"mic_muted"`
+	ServerMuted bool      `json:"server_muted"`
+	IsOwner     bool      `json:"is_owner"`
 }

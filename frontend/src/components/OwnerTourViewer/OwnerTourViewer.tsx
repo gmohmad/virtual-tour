@@ -1,24 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import { useVoiceChat } from "../../hooks/useVoiceChat";
 import { endSession } from "../../services/livetourApi";
 import { useNavigate } from "react-router-dom";
-import Drawer from 'react-modern-drawer';
+import Drawer from "react-modern-drawer";
 import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
 import { ReactPhotoSphereViewer } from "react-photo-sphere-viewer";
 import type { Session } from "../../types/session";
 import type { Tour } from "../../types/tour";
-import './OwnerTourViewer.css';
+import { SessionClientsPanel } from "../SessionClientsPanel/SessionClientsPanel";
+import "./OwnerTourViewer.css";
 
 interface OwnerTourViewerProps {
 	tour: Tour;
 	session: Session;
 	wsUrl: string;
+	selfClientId: string;
 }
 
 export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	tour,
 	session,
 	wsUrl,
+	selfClientId,
 }) => {
 	const viewerRef = useRef<any>(null);
 	const virtualTourRef = useRef<any>(null);
@@ -26,19 +30,37 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	const latestState = useRef({ nodeId: "", yaw: 0, pitch: 0, zoom: 0 });
 
 	const navigate = useNavigate();
-	const { sendMessage, connectionStatus } = useWebSocket(wsUrl);
+	const voiceHandlerRef = useRef<(raw: string) => void>(() => {});
+
+	const { sendMessage, connectionStatus } = useWebSocket(wsUrl, {
+		onMessage: (data) => voiceHandlerRef.current(data),
+	});
+
+	const voice = useVoiceChat({
+		selfId: selfClientId,
+		sendMessage,
+		connectionStatus,
+	});
+
+	voiceHandlerRef.current = (raw) => {
+		void voice.handleSocketMessage(raw);
+	};
+
 	const [openPanel, setOpenPanel] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(true);
 	const isStreamingRef = useRef(isStreaming);
 
-	useEffect(() => {isStreamingRef.current = isStreaming}, [isStreaming]);
+	useEffect(() => {
+		isStreamingRef.current = isStreaming;
+	}, [isStreaming]);
 
 	const startMessageSend = (interval: number) => {
 		intervalRef.current = window.setInterval(() => {
 			const { nodeId, yaw, pitch, zoom } = latestState.current;
-			if (nodeId && isStreamingRef.current) sendMessage({type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom }});
+			if (nodeId && isStreamingRef.current)
+				sendMessage({ type: "state", data: { nodeId, yaw, pitch, zoomLevel: zoom } });
 		}, interval);
-	}
+	};
 
 	const setUpListeners = () => {
 		virtualTourRef.current.addEventListener("node-changed", ({ node }: any) => {
@@ -51,7 +73,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 		viewerRef.current.addEventListener("zoom-updated", ({ zoomLevel }: any) => {
 			latestState.current.zoom = zoomLevel;
 		});
-	}
+	};
 
 	const handleReady = (instance: any) => {
 		viewerRef.current = instance;
@@ -64,12 +86,12 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 	};
 
 	const handleEndSession = () => {
-		endSession(session.id).catch(console.error); // TODO: show error in ui
-		navigate("/companies/my")
+		endSession(session.id).catch(console.error);
+		navigate("/companies/my");
 	};
 
 	const handleIsStreaming = () => {
-		setIsStreaming(!isStreamingRef.current)
+		setIsStreaming(!isStreamingRef.current);
 	};
 
 	useEffect(() => {
@@ -78,9 +100,10 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 		};
 	}, []);
 
+	const isHost = session.owner_id === selfClientId;
+
 	return (
 		<div className="tour-viewer">
-			{/* Immersive Viewer */}
 			<div className="viewer-container">
 				<ReactPhotoSphereViewer
 					src={tour.data.nodes[0]?.panorama}
@@ -90,7 +113,6 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 					onReady={handleReady}
 				/>
 
-				{/* Control Overlay */}
 				<div className="viewer-overlay">
 					<div className="session-info">
 						<div className="connection-status">
@@ -101,35 +123,25 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 				</div>
 			</div>
 
-			{/* Floating Panel Toggle */}
 			{!openPanel && (
-				<button
-					className="panel-toggle"
-					onClick={() => setOpenPanel(true)}
-					title="Open Control Panel"
-				>
+				<button className="panel-toggle" onClick={() => setOpenPanel(true)} title="Open Control Panel" type="button">
 					☰
 				</button>
 			)}
 
-			{/* Control Panel */}
 			<Drawer
 				open={openPanel}
 				onClose={() => setOpenPanel(false)}
 				direction="right"
 				overlayOpacity={0.5}
 				overlayColor="rgba(0,0,0,0.5)"
-				size={320}
+				size={360}
 				className="control-panel"
 				lockBackgroundScroll
 			>
 				<div className="panel-header">
 					<h3>Session Controls</h3>
-					<button
-						className="btn btn-ghost"
-						onClick={() => setOpenPanel(false)}
-						title="Close Panel"
-					>
+					<button className="btn btn-ghost" onClick={() => setOpenPanel(false)} title="Close Panel" type="button">
 						✕
 					</button>
 				</div>
@@ -148,22 +160,27 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 							</div>
 							<div className="info-item">
 								<span className="info-label">Status:</span>
-								<span className={`info-value status ${connectionStatus}`}>
-									{connectionStatus.toUpperCase()}
-								</span>
+								<span className={`info-value status ${connectionStatus}`}>{connectionStatus.toUpperCase()}</span>
 							</div>
 						</div>
 					</div>
+
+					<SessionClientsPanel
+						participants={voice.participants}
+						selfId={selfClientId}
+						isOwner={isHost}
+						localMicMuted={voice.localMicMuted}
+						serverMuted={voice.serverMuted}
+						onToggleMic={voice.toggleLocalMic}
+						onKick={voice.kickParticipant}
+						onRemoteMute={voice.setParticipantRemoteMute}
+					/>
 
 					<div className="panel-section">
 						<h4>Controls</h4>
 						<div className="control-group">
 							<label className="switch-label">
-								<input
-									type="checkbox"
-									checked={isStreaming}
-									onChange={handleIsStreaming}
-								/>
+								<input type="checkbox" checked={isStreaming} onChange={handleIsStreaming} />
 								<span className="switch-text">Live Streaming</span>
 							</label>
 							<p className="control-hint">
@@ -179,14 +196,12 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 						<div className="action-buttons">
 							<button
 								className="btn btn-primary w-full"
+								type="button"
 								onClick={() => navigator.clipboard.writeText(window.location.href)}
 							>
 								Copy Share Link
 							</button>
-							<button
-								className="btn btn-danger w-full"
-								onClick={handleEndSession}
-							>
+							<button className="btn btn-danger w-full" type="button" onClick={handleEndSession}>
 								End Session
 							</button>
 						</div>
@@ -194,5 +209,5 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 				</div>
 			</Drawer>
 		</div>
-	)
-}
+	);
+};

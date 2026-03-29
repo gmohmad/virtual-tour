@@ -6,4 +6,8 @@ export interface Session {
 
 export interface Client {
 	id: string;
+	display_name?: string;
+	mic_muted?: boolean;
+	server_muted?: boolean;
+	is_owner?: boolean;
 }

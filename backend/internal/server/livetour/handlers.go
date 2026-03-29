@@ -62,7 +62,13 @@ func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	clients := make([]dto.Client, 0, session.GetClientsAmount())
 	for _, client := range session.GetClients() {
-		clients = append(clients, dto.Client{ID: client.GetID()})
+		clients = append(clients, dto.Client{
+			ID:          client.GetID(),
+			DisplayName: client.GetDisplayName(),
+			MicMuted:    client.GetMicMuted(),
+			ServerMuted: client.GetServerMuted(),
+			IsOwner:     client.GetID() == session.GetOwnerID(),
+		})
 	}
 	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
 		ID:      session.GetID(),
@@ -92,7 +98,8 @@ func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client := livetour.NewClient(s.logger, clientID, conn)
+	displayName := r.URL.Query().Get("displayName")
+	client := livetour.NewClient(s.logger, clientID, conn, displayName)
 	if err := s.hub.ConnectToSession(sessionID, client); err != nil {
 		conn.WriteJSON(map[string]string{
 			"type":  "error",

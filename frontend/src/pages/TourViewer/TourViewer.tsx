@@ -20,8 +20,13 @@ export const TourViewer: React.FC = () => {
 	const navigate = useNavigate();
 
 	const clientId = useMemo(() => getClientId(user?.id), [user?.id]);
-	const params = new URLSearchParams({ clientId: clientId }).toString();
-	const wsUrl = `${import.meta.env.VITE_LIVETOUR_API_URL.replace("http", "ws")}/connect/${sessionId}?${params}`;
+	const wsQuery = useMemo(() => {
+		const q = new URLSearchParams({ clientId });
+		const name = user?.name?.trim();
+		if (name) q.set("displayName", name);
+		return q.toString();
+	}, [clientId, user?.name]);
+	const wsUrl = `${import.meta.env.VITE_LIVETOUR_API_URL.replace("http", "ws")}/connect/${sessionId}?${wsQuery}`;
 
 	useEffect(() => {
 		if (!sessionId || !tourId) return;
@@ -154,9 +159,9 @@ export const TourViewer: React.FC = () => {
 		return (
 			<div className="tour-container">
 			{isOwner ? (
-				<OwnerTourViewer tour={tour} session={session} wsUrl={wsUrl} />
+				<OwnerTourViewer tour={tour} session={session} wsUrl={wsUrl} selfClientId={clientId} />
 			) : (
-			<ClientTourViewer tour={tour} session={session} wsUrl={wsUrl} />
+				<ClientTourViewer tour={tour} session={session} wsUrl={wsUrl} selfClientId={clientId} />
 			)}
 			</div>
 		);

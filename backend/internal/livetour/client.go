@@ -2,6 +2,7 @@ package livetour
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,16 +11,19 @@ import (
 )
 
 const (
-	maxMessageSize = 512
+	maxMessageSize = 256 * 1024
 	writeWait      = 10 * time.Second
 	pongWait       = 60 * time.Second
 	pingPeriod     = 30 * time.Second
 )
 
 type Client struct {
-	id     uuid.UUID
-	conn   *websocket.Conn
-	logger *zap.Logger
+	id          uuid.UUID
+	displayName string
+	micMuted    bool
+	serverMuted bool
+	conn        *websocket.Conn
+	logger      *zap.Logger
 }
 
 type clientMessage struct {
@@ -27,16 +31,40 @@ type clientMessage struct {
 	Data     []byte
 }
 
-func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn) *Client {
+func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn, displayName string) *Client {
+	if displayName == "" {
+		displayName = "Guest"+"_"+strings.SplitN(id.String(), "-", 2)[0]
+	}
 	return &Client{
-		id:     id,
-		conn:   conn,
-		logger: logger,
+		id:          id,
+		displayName: displayName,
+		conn:        conn,
+		logger:      logger,
 	}
 }
 
 func (c *Client) GetID() uuid.UUID {
 	return c.id
+}
+
+func (c *Client) GetDisplayName() string {
+	return c.displayName
+}
+
+func (c *Client) GetMicMuted() bool {
+	return c.micMuted
+}
+
+func (c *Client) GetServerMuted() bool {
+	return c.serverMuted
+}
+
+func (c *Client) SetMicMuted(v bool) {
+	c.micMuted = v
+}
+
+func (c *Client) SetServerMuted(v bool) {
+	c.serverMuted = v
 }
 
 func (c *Client) writeMessage(message []byte) error {
