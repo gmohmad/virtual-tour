@@ -39,9 +39,12 @@ func main() {
 		logger.Fatal("failed applying migrations", zap.Error(err))
 	}
 
-	s3provider, err := filemanager.NewS3Provider(cfg.S3.Host, os.Getenv("S3_TOKEN"), os.Getenv("S3_SECRET"))
+	s3provider, err := filemanager.NewS3Provider(cfg.S3.Host, os.Getenv("MINIO_ROOT_USER"), os.Getenv("MINIO_ROOT_PASSWORD"))
 	if err != nil {
-		logger.Fatal("failed creat", zap.Error(err))
+		logger.Fatal("failed creatting s3 provider", zap.Error(err))
+	}
+	if err := s3provider.CreateBucket(ctx, cfg.S3.Bucket); err != nil {
+		logger.Fatal("failed creating s3 bucket", zap.Error(err))
 	}
 
 	storage := storage.NewStorage(postgresClient, logger)

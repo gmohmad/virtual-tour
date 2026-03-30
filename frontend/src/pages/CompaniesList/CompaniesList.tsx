@@ -55,7 +55,7 @@ export const CompaniesList: React.FC = () => {
 				cancelButton: 'btn btn-ghost',
 			}
 		});
-		if (result.isConfirmed) {
+		if (result.isConfirmed && user?.id) {
 			removeUserFromCompany(id, user?.id)
 			.then(_ => setCompanies(prev => prev.filter((company, _) => company.id !== id)))
 			.catch(err => setError(`${err.response.data} Could not leave company`))

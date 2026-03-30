@@ -9,14 +9,14 @@ export const Header: React.FC = () => {
 	const { user } = useAuth();
 	const { theme, toggleTheme } = useTheme();
 	const navigate = useNavigate();
-	const settingsRef = useRef(null);
 
-	const closeSettings = (e: MouseEvent) =>{
-		if(isSettingsOpen && !settingsRef.current?.contains(e.target)) {
+	const settingsRef = useRef<HTMLDivElement>(null);
+	const closeSettings = (e: MouseEvent) => {
+		if (isSettingsOpen && settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
 			setIsSettingsOpen(false);
 		}
-	}
-	document.addEventListener('mousedown', closeSettings)
+	};
+	document.addEventListener('mousedown', closeSettings);
 
 	const toggleSettings = () => {
 		setIsSettingsOpen(prev => !prev);

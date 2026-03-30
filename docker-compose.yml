@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16.3-alpine
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    env_file: .env
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  stun:
+    image: coturn/coturn:latest
+    command: -n --fingerprint --lt-cred-mech --no-tls --no-dtls --realm=myrealm --listening-port=3478
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    restart: unless-stopped
+
+  backend-app:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.app
+    env_file: .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - minio
+    restart: unless-stopped
+
+  backend-livetour:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.livetour
+    env_file: .env
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_APP_API_URL: http://localhost:8080
+        VITE_LIVETOUR_API_URL: http://localhost:8081
+        VITE_STUN_SERVER: stun:localhost:3478
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-app
+      - backend-livetour
+      - stun
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

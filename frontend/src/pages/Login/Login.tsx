@@ -12,7 +12,6 @@ export const Login: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 
-
 	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		setError("");

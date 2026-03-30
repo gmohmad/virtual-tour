@@ -3,12 +3,11 @@ http_server:
   app_address: 0.0.0.0:8080
 
 s3:
-  host: http://localhost:9000
+  host: http://minio:9000
   bucket: diploma
   images_path: images/
 
 db:
-  host: localhost:5432
-  db_name: diploma
+  host: postgres:5432
   ssl_mode: disable
   migrations_path: migrations/

@@ -1,6 +1,7 @@
 package filemanager
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -36,6 +37,24 @@ func NewS3Provider(host, accessKey, secretKey string) (*S3Provider, error) {
 		return nil, err
 	}
 	return &S3Provider{config: cfg, session: sess}, nil
+}
+
+func (p *S3Provider) CreateBucket(ctx context.Context, bucketName string) error {
+	client := s3.New(p.session)
+
+	if _, err := client.HeadBucketWithContext(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	}); err == nil {
+		return nil
+	}
+
+	if _, err := client.CreateBucketWithContext(ctx, &s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+	}); err != nil {
+		return fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
+	}
+
+	return nil
 }
 
 func (p *S3Provider) Download(key, bucket string) ([]byte, error) {

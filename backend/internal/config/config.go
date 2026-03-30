@@ -22,9 +22,9 @@ type HTTPServer struct {
 
 type DB struct {
 	Host           string `yaml:"host"`
-	DBName         string `yaml:"db_name"`
 	SSLMode        string `yaml:"ssl_mode"`
 	MigrationsPath string `yaml:"migrations_path"`
+	DBName         string
 	User           string
 	Password       string
 }
@@ -47,6 +47,7 @@ func MustLoad(configPath string) (*Config, error) {
 
 	cfg.DB.User = envutil.GetEnvOrFatal("POSTGRES_USER")
 	cfg.DB.Password = envutil.GetEnvOrFatal("POSTGRES_PASSWORD")
+	cfg.DB.DBName = envutil.GetEnvOrFatal("POSTGRES_DB")
 
 	return &cfg, nil
 }

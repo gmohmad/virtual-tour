@@ -6,7 +6,7 @@ import {
 	type LiveTourParticipantWire,
 } from "../types/livetour";
 
-const iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+const iceServers: RTCIceServer[] = [{ urls: import.meta.env.VITE_STUN_SERVER }];
 
 export type VoiceChatOptions = {
 	selfId: string;

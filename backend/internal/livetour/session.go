@@ -126,11 +126,11 @@ func (s *Session) sendSessionSync(c *Client) {
 		participants = append(participants, s.participantDTO(v))
 	})
 	msg, err := json.Marshal(map[string]any{
-		"type":          "session_sync",
-		"self_id":       c.id,
-		"owner_id":      s.ownerID,
-		"participants":  participants,
-		"session_id":    s.id,
+		"type":         "session_sync",
+		"self_id":      c.id,
+		"owner_id":     s.ownerID,
+		"participants": participants,
+		"session_id":   s.id,
 	})
 	if err != nil {
 		s.logger.Error("session_sync marshal", zap.Error(err))
@@ -324,7 +324,7 @@ func (s *Session) handleModerationMute(payload []byte, actorID uuid.UUID) {
 	s.broadcastParticipantUpdated(target)
 
 	msg, _ := json.Marshal(map[string]any{
-		"type":   "you_are_server_muted",
+		"type":  "you_are_server_muted",
 		"muted": body.Muted,
 	})
 	_ = target.writeMessage(msg)

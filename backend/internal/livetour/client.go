@@ -33,7 +33,7 @@ type clientMessage struct {
 
 func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn, displayName string) *Client {
 	if displayName == "" {
-		displayName = "Guest"+"_"+strings.SplitN(id.String(), "-", 2)[0]
+		displayName = "Guest" + "_" + strings.SplitN(id.String(), "-", 2)[0]
 	}
 	return &Client{
 		id:          id,

@@ -21,8 +21,8 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	session := s.hub.CreateSession(userID)
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
-		ID:         session.GetID(),
-		OwnerID:    session.GetOwnerID(),
+		ID:      session.GetID(),
+		OwnerID: session.GetOwnerID(),
 	}); err != nil {
 		http.Error(w, "Failed writing response", http.StatusInternalServerError)
 	}

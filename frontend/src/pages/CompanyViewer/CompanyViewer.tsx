@@ -232,7 +232,7 @@ export const CompanyViewer: React.FC = () => {
 											<button
 												type="button"
 												className="btn btn-danger btn-sm"
-												onClick={() => handleDeleteTour(companyId, tour.id, tour.name)}
+												onClick={() => {if (companyId) handleDeleteTour(companyId, tour.id, tour.name)}}
 											>
 											Delete
 											</button>
