@@ -146,18 +146,10 @@ export const CompanyViewer: React.FC = () => {
 		});
 		if (!result.isConfirmed) return;
 		setMemberActionLoading(member.id);
-		try {
-			await removeUserFromCompany(companyId, member.id);
-			await refreshMembers();
-		} catch (err: unknown) {
-			const msg =
-				err && typeof err === "object" && "response" in err
-					? (err as { response?: { data?: unknown } }).response?.data
-					: undefined;
-			setError(typeof msg === "string" ? msg : "Could not remove member.");
-		} finally {
-			setMemberActionLoading(null);
-		}
+		await removeUserFromCompany(companyId, member.id)
+			.then(_ => refreshMembers())
+			.catch(err => setError(`${err.response.data} Could not remove member`))
+			.finally(() => setMemberActionLoading(null));
 	};
 
 	return (

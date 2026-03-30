@@ -103,7 +103,7 @@ func (s *Storage) ChangeUserRole(ctx context.Context, userID, targetUserID, comp
 }
 
 func (s *Storage) DeleteUserCompanyRole(ctx context.Context, userID, targetUserID, companyID uuid.UUID) error {
-	if !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
+	if userID != targetUserID && !s.CheckPermission(ctx, userID, companyID, config.OwnerRole) {
 		return domain.ErrInsufficientPermissions
 	}
 	query := `DELETE FROM company_roles WHERE user_id = $1 AND company_id = $2`

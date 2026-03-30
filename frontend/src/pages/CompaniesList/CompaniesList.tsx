@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { deleteCompany, getCompaniesOfUser } from "../../services/appApi";
+import { deleteCompany, getCompaniesOfUser, removeUserFromCompany } from "../../services/appApi";
 import type { Company } from "../../types/company";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
@@ -39,6 +39,26 @@ export const CompaniesList: React.FC = () => {
 			deleteCompany(id)
 				.then(_ => setCompanies(prev => prev.filter((company, _) => company.id !== id)))
 				.catch(_ => setError("Failed to delete company. Please try again."));
+		}
+	};
+
+	const handleLeave = async (id: string, name: string) => {
+		const result = await Swal.fire({
+			title: 'Leave Company',
+			text: `Are you sure you want to leave ${name}?`,
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: 'Leave',
+			cancelButtonText: 'Cancel',
+			customClass: {
+				confirmButton: 'btn btn-danger',
+				cancelButton: 'btn btn-ghost',
+			}
+		});
+		if (result.isConfirmed) {
+			removeUserFromCompany(id, user?.id)
+			.then(_ => setCompanies(prev => prev.filter((company, _) => company.id !== id)))
+			.catch(err => setError(`${err.response.data} Could not leave company`))
 		}
 	};
 
@@ -158,6 +178,7 @@ export const CompaniesList: React.FC = () => {
 												</button>
 											</>
 										) : (
+											<>
 											<button 
 												className="btn btn-ghost"
 												onClick={() => navigate(`/company/${company.id}`)}
@@ -165,6 +186,14 @@ export const CompaniesList: React.FC = () => {
 											>
 												View
 											</button>
+											<button
+												className="btn btn-danger"
+												onClick={() => handleLeave(company.id, company.name)}
+												title="Leave Company"
+											>
+												Leave
+											</button>
+											</>
 										)}
 									</div>
 								</div>
