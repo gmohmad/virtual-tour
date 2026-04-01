@@ -40,6 +40,7 @@ func NewClient(logger *zap.Logger, id uuid.UUID, conn *websocket.Conn, displayNa
 		displayName: displayName,
 		conn:        conn,
 		logger:      logger,
+		micMuted:    true, // mic muted by default
 	}
 }
 

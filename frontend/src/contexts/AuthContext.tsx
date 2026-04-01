@@ -38,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
 			setToken(token);
 			setUser(user);
 		})
-		.catch(console.error)
 		.finally(() => setIsLoading(false));
 	};
 
