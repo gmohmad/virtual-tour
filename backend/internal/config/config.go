@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gmohmad/diploma/pkg/envutil"
+	"github.com/gmohmad/virtual-tour/pkg/envutil"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 

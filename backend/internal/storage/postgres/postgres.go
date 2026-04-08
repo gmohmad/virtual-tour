@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gmohmad/diploma/internal/config"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
 )
 
 const (

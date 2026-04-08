@@ -1,8 +1,9 @@
 package storage
 
 import (
-	"github.com/gmohmad/diploma/internal/storage/postgres"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/storage/postgres"
 )
 
 type Storage struct {

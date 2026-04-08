@@ -1,4 +1,4 @@
-module github.com/gmohmad/diploma
+module github.com/gmohmad/virtual-tour
 
 go 1.25.0
 

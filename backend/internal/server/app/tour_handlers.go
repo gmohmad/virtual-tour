@@ -8,12 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/models/domain"
-	"github.com/gmohmad/diploma/internal/models/dto"
-	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/models/domain"
+	"github.com/gmohmad/virtual-tour/internal/models/dto"
+	"github.com/gmohmad/virtual-tour/internal/server/common"
 )
 
 func (s *Server) handleCreateTour(w http.ResponseWriter, r *http.Request) {

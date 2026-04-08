@@ -4,7 +4,7 @@ http_server:
 
 s3:
   host: http://minio:9000
-  bucket: diploma
+  bucket: virtual-tour
   images_path: images/
 
 db:

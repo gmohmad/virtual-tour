@@ -7,10 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/livetour"
-	livetour_server "github.com/gmohmad/diploma/internal/server/livetour"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/livetour"
+	livetour_server "github.com/gmohmad/virtual-tour/internal/server/livetour"
 )
 
 func main() {

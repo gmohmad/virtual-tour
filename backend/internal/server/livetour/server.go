@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gmohmad/diploma/internal/config"
-	livetour "github.com/gmohmad/diploma/internal/livetour"
-	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	livetour "github.com/gmohmad/virtual-tour/internal/livetour"
+	"github.com/gmohmad/virtual-tour/internal/server/common"
 )
 
 var upgrader = websocket.Upgrader{

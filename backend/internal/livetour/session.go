@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gmohmad/diploma/pkg/maputil"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/pkg/maputil"
 )
 
 type Session struct {

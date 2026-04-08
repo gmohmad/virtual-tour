@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/models/domain"
-	"github.com/gmohmad/diploma/internal/models/dto"
-	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/models/domain"
+	"github.com/gmohmad/virtual-tour/internal/models/dto"
+	"github.com/gmohmad/virtual-tour/internal/server/common"
 )
 
 const maxMultipartMemory = 50 << 20 // 50mb

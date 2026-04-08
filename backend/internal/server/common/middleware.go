@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gmohmad/diploma/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/config"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {

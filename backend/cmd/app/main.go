@@ -7,12 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/filemanager"
-	app_server "github.com/gmohmad/diploma/internal/server/app"
-	"github.com/gmohmad/diploma/internal/storage"
-	"github.com/gmohmad/diploma/internal/storage/postgres"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/filemanager"
+	app_server "github.com/gmohmad/virtual-tour/internal/server/app"
+	"github.com/gmohmad/virtual-tour/internal/storage"
+	"github.com/gmohmad/virtual-tour/internal/storage/postgres"
 )
 
 func main() {

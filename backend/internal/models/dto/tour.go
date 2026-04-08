@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/gmohmad/diploma/internal/models/domain"
+	"github.com/gmohmad/virtual-tour/internal/models/domain"
 )
 
 type TourRequest struct {

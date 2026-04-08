@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gmohmad/diploma/internal/auth"
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/google/uuid"
+
+	"github.com/gmohmad/virtual-tour/internal/auth"
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/models/domain"
 )
 
 func GetUserIDFromRequestToken(r *http.Request) (uuid.UUID, error) {

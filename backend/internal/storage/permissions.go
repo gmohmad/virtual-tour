@@ -3,8 +3,9 @@ package storage
 import (
 	"context"
 
-	"github.com/gmohmad/diploma/internal/config"
 	"github.com/google/uuid"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
 )
 
 func (s *Storage) CheckPermission(ctx context.Context, userID, companyID uuid.UUID, expected string) bool {

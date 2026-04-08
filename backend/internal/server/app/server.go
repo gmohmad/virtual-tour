@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gmohmad/diploma/internal/config"
-	fm "github.com/gmohmad/diploma/internal/filemanager"
-	"github.com/gmohmad/diploma/internal/server/common"
-	"github.com/gmohmad/diploma/internal/storage"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	fm "github.com/gmohmad/virtual-tour/internal/filemanager"
+	"github.com/gmohmad/virtual-tour/internal/server/common"
+	"github.com/gmohmad/virtual-tour/internal/storage"
 )
 
 type Server struct {

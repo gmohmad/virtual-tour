@@ -3,11 +3,12 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/gmohmad/diploma/internal/config"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
 )
 
 func Migrate(cfg *config.DB, logger *zap.Logger) error {

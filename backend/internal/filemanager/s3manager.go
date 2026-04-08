@@ -12,8 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/gmohmad/diploma/pkg/maputil"
 	"github.com/google/uuid"
+
+	"github.com/gmohmad/virtual-tour/pkg/maputil"
 )
 
 type S3Provider struct {

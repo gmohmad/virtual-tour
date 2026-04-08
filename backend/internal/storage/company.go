@@ -3,10 +3,11 @@ package storage
 import (
 	"context"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/internal/models/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/models/domain"
 )
 
 func (s *Storage) CreateCompany(ctx context.Context, userID uuid.UUID, name string) (*domain.Company, error) {

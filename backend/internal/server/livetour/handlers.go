@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gmohmad/diploma/internal/config"
-	livetour "github.com/gmohmad/diploma/internal/livetour"
-	"github.com/gmohmad/diploma/internal/models/dto"
-	"github.com/gmohmad/diploma/internal/server/common"
 	"github.com/google/uuid"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	livetour "github.com/gmohmad/virtual-tour/internal/livetour"
+	"github.com/gmohmad/virtual-tour/internal/models/dto"
+	"github.com/gmohmad/virtual-tour/internal/server/common"
 )
 
 func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {

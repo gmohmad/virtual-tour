@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gmohmad/diploma/internal/config"
-	"github.com/gmohmad/diploma/pkg/maputil"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/pkg/maputil"
 )
 
 const sessionExpiry = time.Minute * 5
