@@ -267,8 +267,8 @@ export function useVoiceChat({ selfId, sendMessage, connectionStatus }: VoiceCha
 		sendMessageRef.current({ type: "mic_state", muted: next });
 	}, []);
 
-	const kickParticipant = useCallback((targetId: string) => {
-		sendMessageRef.current({ type: "moderation_kick", target_id: targetId });
+	const kickParticipant = useCallback((targetId: string, blacklist = false) => {
+		sendMessageRef.current({ type: "moderation_kick", target_id: targetId, blacklist });
 	}, []);
 
 	const setParticipantRemoteMute = useCallback((targetId: string, muted: boolean) => {

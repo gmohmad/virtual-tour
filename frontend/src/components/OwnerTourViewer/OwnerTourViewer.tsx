@@ -9,6 +9,8 @@ import { ReactPhotoSphereViewer } from "react-photo-sphere-viewer";
 import type { Session } from "../../types/session";
 import type { Tour } from "../../types/tour";
 import { SessionClientsPanel } from "../SessionClientsPanel/SessionClientsPanel";
+import { SessionBlacklistPanel } from "../SessionBlacklistPanel/SessionBlacklistPanel";
+import Swal from "sweetalert2";
 import "./OwnerTourViewer.css";
 
 interface OwnerTourViewerProps {
@@ -49,6 +51,7 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 
 	const [openPanel, setOpenPanel] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(true);
+	const [blacklistRefresh, setBlacklistRefresh] = useState(0);
 	const isStreamingRef = useRef(isStreaming);
 
 	useEffect(() => {
@@ -102,6 +105,33 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 
 	const handleIsStreaming = () => {
 		setIsStreaming(!isStreamingRef.current);
+	};
+
+	const handleKick = async (targetId: string) => {
+		const participant = voice.participants.find((p) => p.id === targetId);
+		const name = participant?.displayName ?? "this user";
+		const result = await Swal.fire({
+			title: "Remove participant?",
+			html: `Remove <strong>${name}</strong> from this session?`,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Kick",
+			cancelButtonText: "Cancel",
+			input: "checkbox",
+			inputValue: 0,
+			inputPlaceholder: "Add to session blacklist",
+			customClass: {
+				confirmButton: "btn btn-danger",
+				cancelButton: "btn btn-ghost",
+			},
+		});
+		if (result.isConfirmed) {
+			const addToBlacklist = result.value === 1;
+			voice.kickParticipant(targetId, addToBlacklist);
+			if (addToBlacklist) {
+				setBlacklistRefresh((k) => k + 1);
+			}
+		}
 	};
 
 	useEffect(() => {
@@ -182,9 +212,11 @@ export const OwnerTourViewer: React.FC<OwnerTourViewerProps> = ({
 						localMicMuted={voice.localMicMuted}
 						serverMuted={voice.serverMuted}
 						onToggleMic={voice.toggleLocalMic}
-						onKick={voice.kickParticipant}
+						onKick={handleKick}
 						onRemoteMute={voice.setParticipantRemoteMute}
 					/>
+
+					<SessionBlacklistPanel sessionId={session.id} refreshToken={blacklistRefresh} />
 
 					<div className="panel-section">
 						<h4>Controls</h4>

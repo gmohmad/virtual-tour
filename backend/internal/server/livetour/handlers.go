@@ -2,6 +2,7 @@ package livetour
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -19,7 +20,17 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := s.hub.CreateSession(userID)
+	var req dto.CreateSessionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.TourID == uuid.Nil {
+		http.Error(w, "tour_id is required", http.StatusBadRequest)
+		return
+	}
+
+	session := s.hub.CreateSession(userID, req.TourID)
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(dto.SessionResponse{
 		ID:      session.GetID(),
@@ -80,6 +91,61 @@ func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleGetBlacklist(w http.ResponseWriter, r *http.Request) {
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
+	if err != nil {
+		http.Error(w, "Invalid session id", http.StatusBadRequest)
+		return
+	}
+
+	entries, err := s.hub.GetSessionBlacklist(sessionID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	resp := make([]dto.BlacklistEntryResponse, 0, len(entries))
+	for _, e := range entries {
+		resp = append(resp, dto.BlacklistEntryResponse{
+			ID:          e.ID,
+			DisplayName: e.DisplayName,
+		})
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed writing response", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleRemoveFromBlacklist(w http.ResponseWriter, r *http.Request) {
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	sessionID, err := uuid.Parse(r.PathValue(config.SessionIDKey))
+	if err != nil {
+		http.Error(w, "Invalid session id", http.StatusBadRequest)
+		return
+	}
+	clientID, err := uuid.Parse(r.PathValue(config.ClientIDKey))
+	if err != nil {
+		http.Error(w, "Invalid client id", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.hub.RemoveFromBlacklist(sessionID, userID, clientID); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	common.WriteResponse(w, "removed from blacklist", http.StatusOK)
+}
+
 func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) {
 	clientID, err := uuid.Parse(r.URL.Query().Get(config.ClientIDKey))
 	if err != nil {
@@ -102,9 +168,13 @@ func (s *Server) handleConnectToSession(w http.ResponseWriter, r *http.Request) 
 	displayName := r.URL.Query().Get("displayName")
 	client := livetour.NewClient(s.logger, clientID, conn, displayName)
 	if err := s.hub.ConnectToSession(sessionID, client); err != nil {
+		errMsg := err.Error()
+		if errors.Is(err, livetour.ErrBlacklisted) {
+			errMsg = "blacklisted"
+		}
 		conn.WriteJSON(map[string]string{
 			"type":  "error",
-			"error": err.Error(),
+			"error": errMsg,
 		})
 		conn.Close()
 		return

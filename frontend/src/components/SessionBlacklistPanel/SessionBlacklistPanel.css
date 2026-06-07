@@ -1,0 +1,45 @@
+.session-blacklist-section .blacklist-hint {
+	margin: 0;
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+}
+
+.blacklist-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.blacklist-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	background: var(--bg-surface);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border);
+}
+
+.blacklist-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.blacklist-name {
+	font-weight: var(--font-weight-semibold);
+	color: var(--text-primary);
+}
+
+.blacklist-id {
+	font-size: var(--font-size-xs);
+	color: var(--text-muted);
+}
+
+.blacklist-id.mono {
+	font-family: monospace;
+}

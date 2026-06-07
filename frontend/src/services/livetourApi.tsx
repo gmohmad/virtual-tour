@@ -14,10 +14,18 @@ export const endSession = (sessionId: string) => {
 	return api.delete(`/end-session/${sessionId}`);
 };
 
-export const createSession = () => {
-	return api.post("/create-session");
+export const createSession = (tourId: string) => {
+	return api.post("/create-session", { tour_id: tourId });
 };
 
 export const getSession = (sessionId: string) => {
 	return api.get(`/get-session/${sessionId}`);
-}
+};
+
+export const getSessionBlacklist = (sessionId: string) => {
+	return api.get(`/session/${sessionId}/blacklist`);
+};
+
+export const removeFromBlacklist = (sessionId: string, clientId: string) => {
+	return api.delete(`/session/${sessionId}/blacklist/${clientId}`);
+};

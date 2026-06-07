@@ -1,27 +1,42 @@
 package livetour
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
+	"github.com/gmohmad/virtual-tour/internal/storage"
 	"github.com/gmohmad/virtual-tour/pkg/maputil"
 )
+
+type blacklistEntry struct {
+	DisplayName string
+}
 
 type Session struct {
 	id            uuid.UUID
 	ownerID       uuid.UUID
+	tourID        uuid.UUID
 	clients       *maputil.AsyncMap[uuid.UUID, *Client]
+	blacklist     *maputil.AsyncMap[uuid.UUID, blacklistEntry]
+	joinedClients *maputil.AsyncMap[uuid.UUID, struct{}]
+	peakClients   atomic.Int32
+	startedAt     time.Time
 	ownerJoinedAt time.Time
 
 	incoming   chan clientMessage
 	unregister chan *Client
 	shutdown   chan struct{}
 	logger     *zap.Logger
+
+	historySaver *storage.Storage
+	endReason    string
 }
 
 type participantDTO struct {
@@ -32,16 +47,22 @@ type participantDTO struct {
 	IsOwner     bool      `json:"is_owner"`
 }
 
-func NewSession(logger *zap.Logger, ownerID uuid.UUID) *Session {
+func NewSession(logger *zap.Logger, ownerID, tourID uuid.UUID, historySaver *storage.Storage) *Session {
 	s := &Session{
 		id:            uuid.New(),
 		ownerID:       ownerID,
+		tourID:        tourID,
+		startedAt:     time.Now(),
 		ownerJoinedAt: time.Now(),
 		incoming:      make(chan clientMessage, 1024),
 		unregister:    make(chan *Client, 100),
 		shutdown:      make(chan struct{}),
 		clients:       maputil.NewAsyncMap[uuid.UUID, *Client](),
+		blacklist:     maputil.NewAsyncMap[uuid.UUID, blacklistEntry](),
+		joinedClients: maputil.NewAsyncMap[uuid.UUID, struct{}](),
 		logger:        logger,
+		historySaver:  historySaver,
+		endReason:     "manual",
 	}
 	return s
 }
@@ -52,6 +73,10 @@ func (s *Session) GetID() uuid.UUID {
 
 func (s *Session) GetOwnerID() uuid.UUID {
 	return s.ownerID
+}
+
+func (s *Session) GetTourID() uuid.UUID {
+	return s.tourID
 }
 
 func (s *Session) GetClientsAmount() int {
@@ -66,6 +91,32 @@ func (s *Session) GetClients() []*Client {
 	return out
 }
 
+func (s *Session) GetBlacklist() []struct {
+	ID          uuid.UUID
+	DisplayName string
+} {
+	out := make([]struct {
+		ID          uuid.UUID
+		DisplayName string
+	}, 0, s.blacklist.Len())
+	s.blacklist.Range(func(id uuid.UUID, entry blacklistEntry) {
+		out = append(out, struct {
+			ID          uuid.UUID
+			DisplayName string
+		}{ID: id, DisplayName: entry.DisplayName})
+	})
+	return out
+}
+
+func (s *Session) RemoveFromBlacklist(clientID uuid.UUID) bool {
+	_, ok := s.blacklist.Get(clientID)
+	if !ok {
+		return false
+	}
+	s.blacklist.Del(clientID)
+	return true
+}
+
 func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 	pingTicker := time.NewTicker(pingPeriod)
 	defer pingTicker.Stop()
@@ -73,6 +124,7 @@ func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 	for {
 		select {
 		case <-s.shutdown:
+			s.persistHistory()
 			s.Close()
 			s.logger.Info("session ended", zap.Any("session_id", s.id))
 			return
@@ -97,18 +149,37 @@ func (s *Session) Run(hubSessions *maputil.AsyncMap[uuid.UUID, *Session]) {
 }
 
 func (s *Session) AddClient(client *Client) error {
+	if s.isBlacklisted(client.id) {
+		return ErrBlacklisted
+	}
 	_, ok := s.clients.Get(client.id)
 	if ok {
 		return fmt.Errorf("a client with provided id is already connected")
 	}
 
 	s.clients.Set(client.id, client)
+	if client.id != s.ownerID {
+		s.joinedClients.Set(client.id, struct{}{})
+	}
+	current := int32(s.clients.Len())
+	for {
+		old := s.peakClients.Load()
+		if current <= old || s.peakClients.CompareAndSwap(old, current) {
+			break
+		}
+	}
+
 	go client.poll(s.shutdown, s.incoming, s.unregister)
 
 	s.sendSessionSync(client)
 	s.broadcastParticipantJoined(client)
 	s.logger.Info("client connected to session", zap.Any("client_id", client.id), zap.Any("session_id", s.id))
 	return nil
+}
+
+func (s *Session) isBlacklisted(id uuid.UUID) bool {
+	_, ok := s.blacklist.Get(id)
+	return ok
 }
 
 func (s *Session) participantDTO(c *Client) participantDTO {
@@ -180,11 +251,38 @@ func (s *Session) ShutDown() {
 	s.shutdown <- struct{}{}
 }
 
+func (s *Session) ShutDownExpired() {
+	s.endReason = "expired"
+	s.ShutDown()
+}
+
 func (s *Session) Close() {
 	s.clients.Range(func(key uuid.UUID, value *Client) { _ = value.close() })
 	s.clients.Reset()
 	close(s.incoming)
 	close(s.unregister)
+}
+
+func (s *Session) persistHistory() {
+	if s.historySaver == nil || s.tourID == uuid.Nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	endedAt := time.Now()
+	if err := s.historySaver.SaveSessionHistory(ctx, storage.SessionHistoryInput{
+		SessionID:          s.id,
+		TourID:             s.tourID,
+		OwnerID:            s.ownerID,
+		StartedAt:          s.startedAt,
+		EndedAt:            endedAt,
+		TotalClientsJoined: s.joinedClients.Len(),
+		PeakClients:        int(s.peakClients.Load()),
+		BlacklistedCount:   s.blacklist.Len(),
+		EndReason:          s.endReason,
+	}); err != nil {
+		s.logger.Error("failed saving session history", zap.Error(err), zap.Any("session_id", s.id))
+	}
 }
 
 func (s *Session) broadcastExcept(message []byte, except uuid.UUID) {
@@ -289,7 +387,8 @@ func (s *Session) handleModerationKick(payload []byte, actorID uuid.UUID) {
 		return
 	}
 	var body struct {
-		TargetID uuid.UUID `json:"target_id"`
+		TargetID  uuid.UUID `json:"target_id"`
+		Blacklist bool      `json:"blacklist"`
 	}
 	if err := json.Unmarshal(payload, &body); err != nil {
 		return
@@ -297,7 +396,7 @@ func (s *Session) handleModerationKick(payload []byte, actorID uuid.UUID) {
 	if body.TargetID == s.ownerID {
 		return
 	}
-	s.kickClient(body.TargetID)
+	s.kickClient(body.TargetID, body.Blacklist)
 }
 
 func (s *Session) handleModerationMute(payload []byte, actorID uuid.UUID) {
@@ -331,10 +430,13 @@ func (s *Session) handleModerationMute(payload []byte, actorID uuid.UUID) {
 	_ = target.writeMessage(msg)
 }
 
-func (s *Session) kickClient(targetID uuid.UUID) {
+func (s *Session) kickClient(targetID uuid.UUID, addToBlacklist bool) {
 	c, ok := s.clients.Get(targetID)
 	if !ok {
 		return
+	}
+	if addToBlacklist {
+		s.blacklist.Set(targetID, blacklistEntry{DisplayName: c.displayName})
 	}
 	msg, _ := json.Marshal(map[string]string{
 		"type":   "kicked",

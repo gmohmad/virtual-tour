@@ -9,26 +9,29 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gmohmad/virtual-tour/internal/config"
+	"github.com/gmohmad/virtual-tour/internal/storage"
 	"github.com/gmohmad/virtual-tour/pkg/maputil"
 )
 
 const sessionExpiry = time.Minute * 5
 
 type Hub struct {
-	cfg      *config.Config
-	logger   *zap.Logger
-	sessions *maputil.AsyncMap[uuid.UUID, *Session]
+	cfg          *config.Config
+	logger       *zap.Logger
+	sessions     *maputil.AsyncMap[uuid.UUID, *Session]
+	historySaver *storage.Storage
 }
 
 func (h *Hub) Run(ctx context.Context) {
 	go h.cleanExpiredSessions(ctx)
 }
 
-func NewHub(cfg *config.Config, logger *zap.Logger) *Hub {
+func NewHub(cfg *config.Config, logger *zap.Logger, historySaver *storage.Storage) *Hub {
 	return &Hub{
-		cfg:      cfg,
-		logger:   logger,
-		sessions: maputil.NewAsyncMap[uuid.UUID, *Session](),
+		cfg:          cfg,
+		logger:       logger,
+		sessions:     maputil.NewAsyncMap[uuid.UUID, *Session](),
+		historySaver: historySaver,
 	}
 }
 
@@ -46,11 +49,11 @@ func (h *Hub) ConnectToSession(sessionID uuid.UUID, client *Client) error {
 	return nil
 }
 
-func (h *Hub) CreateSession(ownerID uuid.UUID) *Session {
-	session := NewSession(h.logger, ownerID)
+func (h *Hub) CreateSession(ownerID, tourID uuid.UUID) *Session {
+	session := NewSession(h.logger, ownerID, tourID, h.historySaver)
 	go session.Run(h.sessions)
 	h.sessions.Set(session.id, session)
-	h.logger.Info("session created", zap.Any("session_id", session.id), zap.Any("owner_id", ownerID))
+	h.logger.Info("session created", zap.Any("session_id", session.id), zap.Any("owner_id", ownerID), zap.Any("tour_id", tourID))
 	return session
 }
 
@@ -76,6 +79,34 @@ func (h *Hub) GetSession(sessionID uuid.UUID) (*Session, error) {
 	return session, nil
 }
 
+func (h *Hub) GetSessionBlacklist(sessionID, userID uuid.UUID) ([]struct {
+	ID          uuid.UUID
+	DisplayName string
+}, error) {
+	session, err := h.GetSession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	if session.ownerID != userID {
+		return nil, fmt.Errorf("not enough permissions")
+	}
+	return session.GetBlacklist(), nil
+}
+
+func (h *Hub) RemoveFromBlacklist(sessionID, userID, clientID uuid.UUID) error {
+	session, err := h.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	if session.ownerID != userID {
+		return fmt.Errorf("not enough permissions")
+	}
+	if !session.RemoveFromBlacklist(clientID) {
+		return fmt.Errorf("client not on blacklist")
+	}
+	return nil
+}
+
 func (h *Hub) cleanExpiredSessions(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute)
 	for {
@@ -90,7 +121,7 @@ func (h *Hub) cleanExpiredSessions(ctx context.Context) {
 				}
 			})
 			for _, session := range toDelete {
-				session.ShutDown()
+				session.ShutDownExpired()
 				h.sessions.Del(session.id)
 			}
 		}

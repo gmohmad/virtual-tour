@@ -52,6 +52,8 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("GET /get-session/{sessionId}", s.handleGetSession)
 	r.HandleFunc("DELETE /end-session/{sessionId}", common.AuthMiddleware(s.handleEndSession))
 	r.HandleFunc("POST /create-session", common.AuthMiddleware(s.handleCreateSession))
+	r.HandleFunc("GET /session/{sessionId}/blacklist", common.AuthMiddleware(s.handleGetBlacklist))
+	r.HandleFunc("DELETE /session/{sessionId}/blacklist/{clientId}", common.AuthMiddleware(s.handleRemoveFromBlacklist))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.137.102:3000"},

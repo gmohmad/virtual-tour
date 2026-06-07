@@ -73,6 +73,10 @@ export const getCompanyTours = (companyId: string) => {
 	return api.get(`/company/${companyId}/get-tours`);
 };
 
+export const getSessionHistory = (companyId: string) => {
+	return api.get(`/company/${companyId}/session-history`);
+};
+
 export const createTour = (companyId: string, formData: FormData) => {
   return api.post(`/company/${companyId}/create-tour`, formData);
 };

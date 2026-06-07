@@ -12,6 +12,8 @@ import (
 	"github.com/gmohmad/virtual-tour/internal/config"
 	"github.com/gmohmad/virtual-tour/internal/livetour"
 	livetour_server "github.com/gmohmad/virtual-tour/internal/server/livetour"
+	"github.com/gmohmad/virtual-tour/internal/storage"
+	"github.com/gmohmad/virtual-tour/internal/storage/postgres"
 )
 
 func main() {
@@ -28,7 +30,18 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	hub := livetour.NewHub(cfg, logger)
+	postgresClient, err := postgres.NewClient(ctx, cfg.DB, logger)
+	if err != nil {
+		logger.Fatal("failed creating postgres client", zap.Error(err))
+	}
+	defer postgresClient.Close()
+
+	if err := postgres.Migrate(cfg.DB, logger); err != nil {
+		logger.Fatal("failed applying migrations", zap.Error(err))
+	}
+
+	store := storage.NewStorage(postgresClient, logger)
+	hub := livetour.NewHub(cfg, logger, store)
 	hub.Run(ctx)
 
 	server := livetour_server.New(cfg, logger, hub)

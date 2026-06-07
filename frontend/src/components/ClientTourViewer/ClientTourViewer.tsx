@@ -73,7 +73,22 @@ export const ClientTourViewer: React.FC<ClientTourViewerProps> = ({
 		if (result.isConfirmed) navigate("/login");
 	};
 
+	const handleBlacklisted = async () => {
+		const result = await Swal.fire({
+			title: "Access denied",
+			text: "You have been blacklisted from this session and cannot rejoin.",
+			icon: "error",
+			confirmButtonText: "Ok",
+			customClass: { confirmButton: "btn btn-primary" },
+		});
+		if (result.isConfirmed) navigate("/login");
+	};
+
 	const handleSessionError = async (errorMessage: string) => {
+		if (errorMessage === "blacklisted") {
+			await handleBlacklisted();
+			return;
+		}
 		const result = await Swal.fire({
 			title: "Session error",
 			text: `${errorMessage}`,

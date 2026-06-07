@@ -5,6 +5,7 @@ import {
 	deleteTour,
 	getCompanyByID,
 	getCompanyTours,
+	getSessionHistory,
 	getUsersOfCompany,
 	removeUserFromCompany,
 } from "../../services/appApi";
@@ -16,6 +17,7 @@ import { createSession } from "../../services/livetourApi";
 import "./CompanyViewer.css";
 import Swal from "sweetalert2";
 import type { User } from "../../types/user";
+import type { SessionHistory } from "../../types/sessionHistory";
 import { UserSearch } from "../../components/UserSearch/UserSearch";
 
 export const CompanyViewer: React.FC = () => {
@@ -28,6 +30,7 @@ export const CompanyViewer: React.FC = () => {
 	const [pendingNewMembers, setPendingNewMembers] = useState<User[]>([]);
 	const [userSearchKey, setUserSearchKey] = useState(0);
 	const [memberActionLoading, setMemberActionLoading] = useState<string | null>(null);
+	const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
 	const navigate = useNavigate();
 
 	const isOwner = company.user_role === "owner";
@@ -57,7 +60,10 @@ export const CompanyViewer: React.FC = () => {
 				.catch(err => setError(err.response.data)),
 			getUsersOfCompany(companyId)
 				.then(resp => setMembers(resp.data))
-				.catch(err => setError(err.response.data))
+				.catch(err => setError(err.response.data)),
+			getSessionHistory(companyId)
+				.then(resp => setSessionHistory(resp.data))
+				.catch(() => setSessionHistory([]))
 		])
 	}, [companyId]);
 
@@ -82,7 +88,7 @@ export const CompanyViewer: React.FC = () => {
 	};
 
 	const handleCreateSession = async (tourId: string) => {
-		createSession().then(resp => {navigate(`/session/${tourId}/${resp.data.id}`)});
+		createSession(tourId).then(resp => {navigate(`/session/${tourId}/${resp.data.id}`)});
 	};
 
 	const handleAddMembers = async () => {
@@ -151,6 +157,22 @@ export const CompanyViewer: React.FC = () => {
 			.catch(err => setError(`${err.response.data} Could not remove member`))
 			.finally(() => setMemberActionLoading(null));
 	};
+
+	const formatDuration = (seconds: number) => {
+		if (seconds < 60) return `${seconds}s`;
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		if (mins < 60) return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+		const hrs = Math.floor(mins / 60);
+		const remMins = mins % 60;
+		return remMins > 0 ? `${hrs}h ${remMins}m` : `${hrs}h`;
+	};
+
+	const formatDate = (iso: string) =>
+		new Date(iso).toLocaleString(undefined, {
+			dateStyle: "medium",
+			timeStyle: "short",
+		});
 
 	return (
 		<div className="company-viewer-page">
@@ -256,6 +278,55 @@ export const CompanyViewer: React.FC = () => {
 									</div>
 								</article>
 							))}
+						</div>
+					)}
+				</section>
+
+				<section className="company-viewer-history-section" aria-labelledby="session-history-heading">
+					<div className="company-viewer-tours-header">
+						<h2 id="session-history-heading" className="company-viewer-section-title">
+							Session history ({sessionHistory.length})
+						</h2>
+					</div>
+					{sessionHistory.length === 0 ? (
+						<div className="company-viewer-empty">
+							<p className="company-viewer-empty-title">No completed sessions yet</p>
+							<p>Finished live tour sessions for this company will appear here.</p>
+						</div>
+					) : (
+						<div className="session-history-table-wrap">
+							<table className="session-history-table">
+								<thead>
+									<tr>
+										<th>Tour</th>
+										<th>Host</th>
+										<th>Ended</th>
+										<th>Duration</th>
+										<th>Clients</th>
+										<th>Peak</th>
+										<th>Blocked</th>
+										<th>End reason</th>
+									</tr>
+								</thead>
+								<tbody>
+									{sessionHistory.map((entry) => (
+										<tr key={entry.id}>
+											<td>{entry.tour_name}</td>
+											<td>{entry.owner_name}</td>
+											<td>{formatDate(entry.ended_at)}</td>
+											<td>{formatDuration(entry.duration_seconds)}</td>
+											<td>{entry.total_clients_joined}</td>
+											<td>{entry.peak_clients}</td>
+											<td>{entry.blacklisted_count}</td>
+											<td>
+												<span className={`end-reason end-reason-${entry.end_reason}`}>
+													{entry.end_reason}
+												</span>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
 						</div>
 					)}
 				</section>

@@ -68,6 +68,7 @@ func (s *Server) setupHandler() {
 	r.HandleFunc("GET /company/{companyId}/get-tours", common.AuthMiddleware(s.handleGetToursByCompanyID))
 	r.HandleFunc("GET /get-tour-by-id/{tourId}", s.handleGetTourByID)
 	r.HandleFunc("GET /get-user-tours", common.AuthMiddleware(s.handleGetUserTours))
+	r.HandleFunc("GET /company/{companyId}/session-history", common.AuthMiddleware(s.handleGetSessionHistory))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3001", "http://192.168.137.102:3000"},
