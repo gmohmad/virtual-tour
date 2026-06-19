@@ -11,6 +11,7 @@ import { TourViewer } from "./pages/TourViewer/TourViewer";
 import { Logout } from "./pages/Logout/Logout";
 import { Header } from "./components/Header/Header";
 import { useAuth } from "./contexts/AuthContext";
+import { Join } from "./pages/Join/Join";
 
 function LayoutWithHeader() {
 	return (
@@ -34,7 +35,10 @@ function ProtectedRoute() {
 function AppRoutes() {
 	return (
 		<Routes>
+			<Route path="/" element={<Navigate to="/login" replace />} />
+			<Route path="" element={<Navigate to="/login" replace />} />
 			<Route element={<LayoutWithHeader />}>
+				<Route path="/join" element={<Join />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
 

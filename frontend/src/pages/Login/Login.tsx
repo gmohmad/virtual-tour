@@ -19,7 +19,7 @@ export const Login: React.FC = () => {
 
 		await login(email, password).
 			then(_ => navigate("/companies/my"))
-			.catch(err => setError(err.response?.data || "Login failed. Please try again."))
+			.catch(err => {console.log(err);setError(err.response?.data || "Login failed. Please try again.")})
 			.finally(() => setIsLoading(false));
 	}
 

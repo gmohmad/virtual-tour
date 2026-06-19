@@ -93,6 +93,12 @@ export const Header: React.FC = () => {
 									>
 										{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
 									</button>
+									<button 
+										className="btn btn-ghost"
+										onClick={() => {navigate("join")}}
+									>
+										Join by link
+									</button>
 								</div>
 							)}
 						</div>
